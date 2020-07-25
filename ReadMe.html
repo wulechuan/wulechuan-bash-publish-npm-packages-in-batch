@@ -15,6 +15,7 @@
 <p>我们可以借助 <a href="https://verdaccio.org/">verdaccio</a> 这样的工具搭建私有 npm 注册点服务器，简称私有 npm 服务器。</p>
 <p>但要方便的将大批 npm 包的 <code>.tgz</code> 文件导入我们的私有 npm 服务器则没有现成工具。本人遂构建本工具，以较为方便的将已经在本机的某些 node_modules 文件夹内的 npm 包，批量【发布】（<code>publish</code>）到我们的私有 npm 服务器上。</p>
 <p>本工具是一个 bash 脚本，内部调用 <code>npm  publish  &quot;文件夹路径&quot;</code> 命令来发布 npm 包至指定 npm 服务器。默认的 npm 服务器为 verdaccio 搭建的 <code>http://localhost:4873</code>。</p>
+<hr>
 <h2 id="%E7%94%A8%E6%B3%95"><a class="header-anchor" href="#%E7%94%A8%E6%B3%95">§</a> 用法</h2>
 <h3 id="%E8%AF%AD%E6%B3%95"><a class="header-anchor" href="#%E8%AF%AD%E6%B3%95">§</a> 语法</h3>
 <pre><code class="hljs language-bash"><span class="hljs-built_in source">source</span>  <span class="hljs-string"><span class="string-quote string-open-quote">"</span><span class="string-body">&lt;本工具路径&gt;/source/search-a-folder-and-publish-all.sh</span><span class="string-quote string-close-quote">"</span></span>  <span class="punctuation bracket open-bracket">[</span><span class="hljs-string"><span class="string-quote string-open-quote">"</span><span class="string-body">&lt;深度搜索所有node_modules文件夹的起始文件夹路径&gt;</span><span class="string-quote string-close-quote">"</span></span><span class="punctuation bracket close-bracket">]</span>  <span class="punctuation bracket open-bracket">[</span><span class="hljs-string"><span class="string-quote string-open-quote">"</span><span class="string-body">&lt;注册点服务器的URL&gt;</span><span class="string-quote string-close-quote">"</span></span><span class="punctuation bracket close-bracket">]</span><br
@@ -38,6 +39,7 @@
 ></code></pre>
 </li>
 </ul>
+<hr>
 <h2 id="%E5%B7%B2%E7%9F%A5%E9%97%AE%E9%A2%98"><a class="header-anchor" href="#%E5%B7%B2%E7%9F%A5%E9%97%AE%E9%A2%98">§</a> 已知问题</h2>
 <h3 id="%E9%97%AE%E9%A2%98%E5%88%97%E8%A1%A8"><a class="header-anchor" href="#%E9%97%AE%E9%A2%98%E5%88%97%E8%A1%A8">§</a> 问题列表</h3>
 <ul>

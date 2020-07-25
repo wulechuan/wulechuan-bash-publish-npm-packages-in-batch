@@ -8,6 +8,8 @@
 
 本工具是一个 bash 脚本，内部调用 `npm  publish  "文件夹路径"` 命令来发布 npm 包至指定 npm 服务器。默认的 npm 服务器为 verdaccio 搭建的 `http://localhost:4873`。
 
+---
+
 ## 用法
 
 ### 语法
@@ -37,6 +39,8 @@ source  "<本工具路径>/source/search-a-folder-and-publish-all.sh"  ["<深度
     ```bash
     source  "/d/tools/wulechuan-bash-publish-npm-packages-in-batch/source/search-a-folder-and-publish-all.sh"  .  "https://registry.npmjs.com"
     ```
+
+---
 
 ## 已知问题
 
