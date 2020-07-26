@@ -16,9 +16,13 @@ function searchRecursivelyAndPublishAll {
 
     # ───────────────────────────────────────────────────────────────────────────
 
+    local tgzCacheRootFolderFullPath='/c/taobao-npm-tgz-caches'
+
     local shouldDryRun=0
     local shouldDebug=0
-    local tgzCacheRootFolderFullPath='/c/taobao-npm-tgz-caches'
+    local shouldSkipDownloadingIfTgzCacheExists=1
+
+
 
     local VE_line_5='─────'
     local VE_line_10="${VE_line_5}${VE_line_5}"
@@ -48,6 +52,12 @@ function searchRecursivelyAndPublishAll {
 
     local a_node_modules_path
     local node_modules_folder_index=0
+
+
+
+    local shouldExit_forDebuggingPerpose=0
+
+
 
     for a_node_modules_path in ${allNodeModulesFolders[@]}; do
         node_modules_folder_index=$((node_modules_folder_index+1))
@@ -113,6 +123,12 @@ function searchRecursivelyAndPublishAll {
             local a_folder_suh_path_at_level_2
 
             for a_folder_suh_path_at_level_2 in ${all_folder_sub_paths_at_level_2[@]}; do
+                if [ $shouldExit_forDebuggingPerpose -ne 0 ]; then
+                    return
+                fi
+
+
+
                 folder_index_at_level_2=$((folder_index_at_level_2+1))
 
                 local folder_name_at_level_2=`echo "$a_folder_suh_path_at_level_2" | sed 's|/$||'`
@@ -139,6 +155,9 @@ function searchRecursivelyAndPublishAll {
 
                 if [ ! -f "${package_json_full_path_at_level_2}" ]; then
                     echo -e "\e[31mINVALID (thus ignored)\e[0m: \e[32m${folder_name_at_level_2}\e[0m"
+                    echo
+                    echo
+                    echo
                     continue
                 fi
 
@@ -146,6 +165,24 @@ function searchRecursivelyAndPublishAll {
 
                 local package_local_name="${folder_name_at_level_2}"
                 local package_full_name="${package_local_name}"
+
+
+
+                # if [ "$package_local_name" == "typescript" ]; then
+                #     echo
+                #     echo -e "\e[30;41mTEMP LOGIC HERE\e[0;0m"
+                #     echo -e "\e[30;41mTEMP LOGIC HERE\e[0;0m"
+                #     echo -e "\e[30;41mTEMP LOGIC HERE\e[0;0m"
+                #     echo
+                #     shouldExit_forDebuggingPerpose=1
+                # else
+                #     echo
+                #     echo
+                #     echo
+                #     continue
+                # fi
+
+
 
                 if [ $level_1_is_an_npm_scope -ne 0 ]; then
                     package_full_name="${folder_name_at_level_1}/${package_local_name}"
@@ -222,8 +259,11 @@ function searchRecursivelyAndPublishAll {
                 if [ $shouldPublish -ne 1 ]; then
                     echo
                     # echo -e  "\e[31m${VE_line_10:0:7}\e[0m"
-                    echo -e "\e[30;41mSKIPPED\e[0;0m"
+                    echo -e "\e[30;41mPUBLISHING SKIPPED\e[0;0m"
                     echo -e  "\e[31m${VE_line_50}\e[0m"
+                    echo
+                    echo
+                    echo
                     continue
                 fi
 
@@ -233,12 +273,25 @@ function searchRecursivelyAndPublishAll {
                 local tgz_local_cache_file_full_path="${tgz_cache_folder_full_path}/${package_local_name}-${package_version}.tgz"
 
 
+                local shouldDownload=1
+                if [ $shouldSkipDownloadingIfTgzCacheExists -ne 0 ]; then
+                    if [ -f "${tgz_local_cache_file_full_path}" ]; then
+                        shouldDownload=0
+                    fi
+                fi
 
-                echo -e  "\e[32m${VE_line_50}\e[0m"
-                echo -e  "\e[30;42mdownloading tgz from taobao\e[0;0m \e[32m${package_full_name}\e[0m@\e[35m${package_version}\e[0m"
-                echo -e  "\e[32m${VE_line_50}\e[0m"
-                echo -e  "RESOURCE URL: \e[32m${taobao_tgz_url}\e[0m"
-                echo
+                if [ $shouldDownload -ne 0 ]; then
+                    echo -e "\e[32m${VE_line_50}\e[0m"
+                    echo -e "\e[30;42mDOWNLOADING TGZ FROM TAOBAO REGISTRY\e[0;0m \e[32m${package_full_name}\e[0m@\e[35m${package_version}\e[0m"
+                    echo -e "\e[32m${VE_line_50}\e[0m"
+                    echo -e "RESOURCE URL: \e[32m${taobao_tgz_url}\e[0m"
+                    echo
+                else
+                    echo -e "\e[33m${VE_line_50}\e[0m"
+                    echo -e "\e[30;43mDOWNLOADING SKIPPED\e[0;0m \e[32m${package_full_name}\e[0m@\e[35m${package_version}\e[0m"
+                    echo -e "\e[33m${VE_line_50}\e[0m"
+                    echo
+                fi
 
                 if [ "$shouldDryRun" -eq 0 ]; then
                     curl -L "${taobao_tgz_url}" > "${tgz_local_cache_file_full_path}"
@@ -261,11 +314,10 @@ function searchRecursivelyAndPublishAll {
 
                 echo -e  "\e[32m${VE_line_50}\e[0m"
 
+                echo
+                echo
+                echo
             done # end of 'for' loop of level 2
-
-            echo
-            echo
-            echo
         done # end of 'for' loop of level 1
 
         echo
