@@ -18,7 +18,7 @@ function searchRecursivelyAndPublishAll {
 
     local shouldDryRun=0
     local shouldDebug=0
-    local tgzCacheFolderName='taobao-npm-tgz-caches'
+    local tgzCacheFolderPath='/c/taobao-npm-tgz-caches'
 
     local VE_line_5='─────'
     local VE_line_10="${VE_line_5}${VE_line_5}"
@@ -30,14 +30,18 @@ function searchRecursivelyAndPublishAll {
 
 
 
-    mkdir -p ~/${tgzCacheFolderName}
+    mkdir -p "${tgzCacheFolderPath}"
 
-    echo -e "\e[32mSearching from \"\e[35m${searchingRootPath}\e[32m\"\e[0m"
+    echo
+    echo
+    echo
+    echo -e "\e[32mSearching packages under \"\e[35m${searchingRootPath}\e[32m\"\e[0m"
     local allNodeModulesFolders=(`find  ${searchingRootPath} -name 'node_modules'`)
     local foundNodeModulesFoldersCount=${#allNodeModulesFolders[@]}
 
-    echo -e "\e[32mSearching completed. Found \e[35m${foundNodeModulesFoldersCount}\e[32m \"node_module\" folders\e[0m"
-    echo -e "${VE_line_60}"
+    echo -e "\e[32mSearching completed. Found \e[35m${foundNodeModulesFoldersCount}\e[32m \"\e[33mnode_module\e[32m\" folders\e[0m"
+    echo
+    echo
     echo
 
     local a_node_modules_path
@@ -49,7 +53,7 @@ function searchRecursivelyAndPublishAll {
         local node_modules_folder_index_colorful_string="\e[33mnode_modules\e[0m folder: \e[35m${node_modules_folder_index}\e[0m/\e[33m${foundNodeModulesFoldersCount}\e[0m"
 
         echo -e "${VE_line_60}"
-        echo -e "${node_modules_folder_index_colorful_string}:    \e[35m${a_node_modules_path}\e[0m"
+        echo -e "${node_modules_folder_index_colorful_string}:\n  \e[35m${a_node_modules_path}\e[0m"
         echo -e "${VE_line_60}"
         echo
         echo
@@ -134,6 +138,8 @@ function searchRecursivelyAndPublishAll {
                     | grep   "^${package_full_name}\s"\
                     | sed -e 's/.*/"&"/'
                 )
+
+                echo
                 eval allSearchingResults=(${allSearchingResults})
 
                 if [ "$shouldDebug" -ne 0 ]; then
@@ -168,7 +174,8 @@ function searchRecursivelyAndPublishAll {
                 fi
 
                 if [ $shouldPublish -ne 1 ]; then
-                    echo -e  "\e[31m${VE_line_50}\e[0m"
+                    echo
+                    # echo -e  "\e[31m${VE_line_10:0:7}\e[0m"
                     echo -e "\e[30;41mSKIPPED\e[0;0m"
                     echo -e  "\e[31m${VE_line_50}\e[0m"
                 else
@@ -180,9 +187,9 @@ function searchRecursivelyAndPublishAll {
                     echo -e  "RESOURCE: \e[32m${taobao_tgz_url}\e[0m"
 
                     if [ "$shouldDryRun" -eq 0 ]; then
-                        curl -L "${taobao_tgz_url}" > ~/"${tgzCacheFolderName}/${package_full_name}-${package_version}.tgz"
+                        curl -L "${taobao_tgz_url}" > "${tgzCacheFolderPath}/${package_full_name}-${package_version}.tgz"
                     else
-                        echo -e "\e[30;41m[PSUEDO]\e[0;0m curl -L \"${taobao_tgz_url}\" > ~/\"${tgzCacheFolderName}/${package_full_name}-${package_version}.tgz\""
+                        echo -e "\e[30;41m[PSUEDO]\e[0;0m curl -L \"${taobao_tgz_url}\" > \"${tgzCacheFolderPath}/${package_full_name}-${package_version}.tgz\""
                     fi
 
                     echo -e  "\e[32m${VE_line_50}\e[0m"
@@ -191,9 +198,9 @@ function searchRecursivelyAndPublishAll {
                     echo -e  "\e[32m${VE_line_50}\e[0m"
                     # npm  publish  --registry="${npmRegistryURL}"  ${package_full_path}
                     if [ "$shouldDryRun" -eq 0 ]; then
-                        npm  publish  --registry="${npmRegistryURL}"  ~/"${tgzCacheFolderName}/${package_full_name}-${package_version}.tgz"
+                        npm  publish  --registry="${npmRegistryURL}"  "${tgzCacheFolderPath}/${package_full_name}-${package_version}.tgz"
                     else
-                        echo -e "\e[30;41m[PSUEDO]\e[0;0m npm publish --registry=\"${npmRegistryURL}\" ~/\"${tgzCacheFolderName}/${package_full_name}-${package_version}.tgz\""
+                        echo -e "\e[30;41m[PSUEDO]\e[0;0m npm publish --registry=\"${npmRegistryURL}\" \"${tgzCacheFolderPath}/${package_full_name}-${package_version}.tgz\""
                     fi
                     echo -e  "\e[32m${VE_line_50}\e[0m"
                 fi
