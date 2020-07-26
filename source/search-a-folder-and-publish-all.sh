@@ -16,6 +16,11 @@ function searchRecursivelyAndPublishAll {
 
     # ───────────────────────────────────────────────────────────────────────────
 
+    local shouldDryRun=0
+    local shouldDebug=0
+    local tempFileNameOfSearchingResult="wlc-npm-search-result-${RANDOM}.tmp"
+    local tgzCacheFolderName='taobao-npm-tgz-caches'
+
     local VE_line_5='─────'
     local VE_line_10="${VE_line_5}${VE_line_5}"
     local VE_line_20="${VE_line_10}${VE_line_10}"
@@ -25,9 +30,10 @@ function searchRecursivelyAndPublishAll {
     # ───────────────────────────────────────────────────────────────────────────
 
 
-    mkdir -p ~/taobao-npm-tgz-caches
 
-    echo -e "\e[32mSearching from \"\e[35m${searchingRootPath}\e[32m\"...\e[0m"
+    mkdir -p ~/${tgzCacheFolderName}
+
+    echo -e "\e[32mSearching from \"\e[35m${searchingRootPath}\e[32m\"\e[0m"
     local allNodeModulesFolders=(`find  ${searchingRootPath} -name 'node_modules'`)
     local foundNodeModulesFoldersCount=${#allNodeModulesFolders[@]}
 
@@ -85,7 +91,10 @@ function searchRecursivelyAndPublishAll {
             else
                 local packageVersionLines=`cat "${packageJSONFullPath}" | grep "^\s*\"version\":\s*\"[0-9]\+\.[0-9]\+\."`
                 local package_version=`echo "${packageVersionLines}" | sed '/"[0-9\.]\+/!d' | sed 's/ \+"version": \+"//' | sed 's/",\? *$//'`
-                # echo "package_version=\"${package_version}\""
+
+                if [ ! "$shouldDebug" -eq 0 ]; then
+                    echo "package_version=\"${package_version}\""
+                fi
 
                 local package_full_name="${package_folder_name_prefix}${package_folder_name}"
 
@@ -99,21 +108,27 @@ function searchRecursivelyAndPublishAll {
                     | sed  's/\t[^\t]\+$//g'\
                     | sed  's/\t=[^\t]\+//g'\
                     | sed  's/\t[0-9]\{4\}\-[0-9]\{2\}\-[0-9]\{2\}//'\
-                    | sed  's/\t$//'\
+                    | sed  's/\t\+$//'\
                     | grep "^${package_full_name}\s"\
-                    > ~/wlc-npm-search-result.tmp
+                    > ~/"${tempFileNameOfSearchingResult}"
 
-                local searchingResult=`head -n 1 ~/wlc-npm-search-result.tmp`
-                rm -f ~/wlc-npm-search-result.tmp
-                # echo "searchingResult=\"$searchingResult\""
+                local searchingResult=`head -n 1 ~/"${tempFileNameOfSearchingResult}"`
+                rm -f ~/"${tempFileNameOfSearchingResult}"
+
+                if [ ! "$shouldDebug" -eq 0 ]; then
+                    echo "searchingResult=\"$searchingResult\""
+                fi
 
                 local shouldPublish=0
 
                 if [ -z "$searchingResult" ]; then
                     shouldPublish=1
                 else
-                    local searchingResultVersion=`echo "${searchingResult}" | sed 's/^[^\t]\+\t//'`
-                    # echo -e "\e[30;42m${npmRegistryURL}\e[0;0m \e[32mFOUND VERSION: \e[33m${package_full_name}\e[0m@\e[35m${searchingResultVersion}\e[0m"
+                    local searchingResultVersion=`echo "${searchingResult}" | sed 's/^[^\t]\+\t\+//'`
+
+                    if [ ! "$shouldDebug" -eq 0 ]; then
+                        echo "searchingResultVersion=\"$searchingResultVersion\""
+                    fi
 
                     if [ "${package_version}" == "${searchingResultVersion}" ]; then
                         echo -e "\e[30;41m${npmRegistryURL}\e[0;0m \e[31mALREADY EXISTS: \e[32m${package_full_name}\e[0m@\e[35m${searchingResultVersion}\e[0m"
@@ -127,18 +142,26 @@ function searchRecursivelyAndPublishAll {
                     local taobao_tgz_url="https://registry.npm.taobao.org/${package_full_name}/download/${package_full_name}-${package_version}.tgz"
 
                     echo -e  "\e[32m${VE_line_50}\e[0m"
-                    echo -e  "\e[30;42mdownloading tgz from taobao\e[0;0m \e[32m${package_full_name}\e[0m@\e[35m${package_version}\e[0m..."
+                    echo -e  "\e[30;42mdownloading tgz from taobao\e[0;0m \e[32m${package_full_name}\e[0m@\e[35m${package_version}\e[0m"
                     echo -e  "\e[32m${VE_line_50}\e[0m"
                     echo -e  "RESOURCE: \e[32m${taobao_tgz_url}\e[0m"
 
-                    curl -L "${taobao_tgz_url}" > ~/taobao-npm-tgz-caches/"${package_full_name}-${package_version}.tgz"
+                    if [ "$shouldDryRun" -eq 0 ]; then
+                        curl -L "${taobao_tgz_url}" > ~/"${tgzCacheFolderName}/${package_full_name}-${package_version}.tgz"
+                    else
+                        echo -e "\e[30;41m[PSUEDO]\e[0;0m curl -L \"${taobao_tgz_url}\" > ~/\"${tgzCacheFolderName}/${package_full_name}-${package_version}.tgz\""
+                    fi
 
                     echo -e  "\e[32m${VE_line_50}\e[0m"
 
-                    echo -e "\e[30;42mnpm publishing\e[0;0m \e[32m${package_full_name}\e[0m@\e[35m${package_version}\e[0m..."
+                    echo -e "\e[30;42mnpm publishing\e[0;0m \e[32m${package_full_name}\e[0m@\e[35m${package_version}\e[0m"
                     echo -e  "\e[32m${VE_line_50}\e[0m"
                     # npm  publish  --registry="${npmRegistryURL}"  ${package_full_path}
-                    npm  publish  --registry="${npmRegistryURL}"  ~/taobao-npm-tgz-caches/"${package_full_name}-${package_version}.tgz"
+                    if [ "$shouldDryRun" -eq 0 ]; then
+                        npm  publish  --registry="${npmRegistryURL}"  ~/"${tgzCacheFolderName}/${package_full_name}-${package_version}.tgz"
+                    else
+                        echo -e "\e[30;41m[PSUEDO]\e[0;0m npm publish --registry=\"${npmRegistryURL}\" ~/\"${tgzCacheFolderName}/${package_full_name}-${package_version}.tgz\""
+                    fi
                     echo -e  "\e[32m${VE_line_50}\e[0m"
                 fi
             fi
