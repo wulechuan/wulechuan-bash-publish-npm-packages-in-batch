@@ -17,7 +17,7 @@ function searchRecursivelyAndPublishAll {
     # ───────────────────────────────────────────────────────────────────────────
 
     local shouldDryRun=0
-    local shouldDebug=0
+    local shouldDebug=1
     local tempFileNameOfSearchingResult="wlc-npm-search-result-${RANDOM}.tmp"
     local tgzCacheFolderName='taobao-npm-tgz-caches'
 
@@ -61,8 +61,6 @@ function searchRecursivelyAndPublishAll {
         local a_pack_path
         local pack_index=0
 
-        local package_name_prefix=''
-
         for a_pack_path in ${packPaths[@]}; do
             local a_pack_path_string_length=${#a_pack_path}
             local a_pack_path_sliced_length=$((a_pack_path_string_length-1))
@@ -79,21 +77,31 @@ function searchRecursivelyAndPublishAll {
             echo -e  "            package: \e[35m${pack_index}\e[0m/\e[33m${foundPacksCount}\e[0m"
             echo -e  "${VE_line_60}"
 
-
             if [ ! -f "${packageJSONFullPath}" ]; then
-                if [[ "${package_folder_name}" =~ ^@[_a-z0-9]+\/ ]]; then
-                    echo
-                    package_folder_name_prefix=${package_folder_name}\/
+                if [[ "${package_folder_name}" =~ ^@[_a-z0-9]+ ]]; then
+                    echo -e "\e[34mSEEMS TO BE A SCOPE\e[0m: \e[32m${package_folder_name}\e[0m"
                 else
                     echo -e "\e[31mINVALID (thus ignored)\e[0m: \e[32m${package_folder_name}\e[0m"
-                    package_folder_name_prefix=''
                 fi
             else
                 local packageVersionLines=`cat "${packageJSONFullPath}" | grep "^\s*\"version\":\s*\"[0-9]\+\.[0-9]\+\."`
                 local package_version=`echo "${packageVersionLines}" | sed '/"[0-9\.]\+/!d' | sed 's/ \+"version": \+"//' | sed 's/",\? *$//'`
 
                 if [ ! "$shouldDebug" -eq 0 ]; then
-                    echo "package_version=\"${package_version}\""
+                    echo -e "[DEBUG]: package_version=\"${package_version}\""
+                fi
+
+                local parent_folder_name=`dirname  "$package_full_path"`
+                parent_folder_name=`basename  "${parent_folder_name}"`
+
+                if [ ! "$shouldDebug" -eq 0 ]; then
+                    echo -e "[DEBUG]: parent_folder_name=\"$parent_folder_name\""
+                fi
+
+                local package_folder_name_prefix=''
+
+                if [[ "$parent_folder_name" =~ ^@[_a-z0-9]+ ]]; then
+                    package_folder_name_prefix="${parent_folder_name}/"
                 fi
 
                 local package_full_name="${package_folder_name_prefix}${package_folder_name}"
@@ -116,7 +124,7 @@ function searchRecursivelyAndPublishAll {
                 rm -f ~/"${tempFileNameOfSearchingResult}"
 
                 if [ ! "$shouldDebug" -eq 0 ]; then
-                    echo "searchingResult=\"$searchingResult\""
+                    echo -e "[DEBUG]: searchingResult=\"$searchingResult\""
                 fi
 
                 local shouldPublish=0
@@ -127,7 +135,7 @@ function searchRecursivelyAndPublishAll {
                     local searchingResultVersion=`echo "${searchingResult}" | sed 's/^[^\t]\+\t\+//'`
 
                     if [ ! "$shouldDebug" -eq 0 ]; then
-                        echo "searchingResultVersion=\"$searchingResultVersion\""
+                        echo -e "[DEBUG]: searchingResultVersion=\"$searchingResultVersion\""
                     fi
 
                     if [ "${package_version}" == "${searchingResultVersion}" ]; then
