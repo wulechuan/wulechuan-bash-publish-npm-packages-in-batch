@@ -18,7 +18,7 @@ function searchRecursivelyAndPublishAll {
 
     local shouldDryRun=0
     local shouldDebug=0
-    local tgzCacheFolderPath='/c/taobao-npm-tgz-caches'
+    local tgzCacheRootFolderFullPath='/c/taobao-npm-tgz-caches'
 
     local VE_line_5='─────'
     local VE_line_10="${VE_line_5}${VE_line_5}"
@@ -30,7 +30,9 @@ function searchRecursivelyAndPublishAll {
 
 
 
-    mkdir -p "${tgzCacheFolderPath}"
+    if [ $shouldDryRun -eq 0 ]; then
+        mkdir -p "${tgzCacheRootFolderFullPath}"
+    fi
 
     echo
     echo
@@ -53,79 +55,120 @@ function searchRecursivelyAndPublishAll {
         local node_modules_folder_index_colorful_string="\e[33mnode_modules\e[0m folder: \e[35m${node_modules_folder_index}\e[0m/\e[33m${foundNodeModulesFoldersCount}\e[0m"
 
         echo -e "${VE_line_60}"
-        echo -e "${node_modules_folder_index_colorful_string}:\n  \e[35m${a_node_modules_path}\e[0m"
+        echo -e "${node_modules_folder_index_colorful_string}:\nPATH: \e[35m${a_node_modules_path}\e[0m"
         echo -e "${VE_line_60}"
         echo
         echo
         echo
 
-        local packPaths=(`ls -1 "${a_node_modules_path}"`)
-        local foundPacksCount=${#packPaths[@]}
-        local a_pack_path
-        local pack_index=0
-        # local shouldStopWhenNextLoopBegin=0
+        local all_folder_sub_paths_at_level_1=(`ls -1 "${a_node_modules_path}"`)
+        local all_folders_count_at_level_1=${#all_folder_sub_paths_at_level_1[@]}
 
-        for a_pack_path in ${packPaths[@]}; do
-            # if [ $shouldStopWhenNextLoopBegin -ne 0 ]; then return; fi
+        local folder_index_at_level_1=0
+        local a_folder_suh_path_at_level_1
 
-            # if [[ ! "$a_pack_path" =~ mkdirp ]]; then
-            #     continue;
-            # else
-            #     echo TEMP CODE
-            #     echo TEMP CODE
-            #     echo TEMP CODE
-            #     echo TEMP CODE
-            #     echo TEMP CODE
-            #     echo TEMP CODE
-            #     shouldStopWhenNextLoopBegin=1
-            # fi
+        for a_folder_suh_path_at_level_1 in ${all_folder_sub_paths_at_level_1[@]}; do
+            folder_index_at_level_1=$((folder_index_at_level_1+1))
 
-            local a_pack_path_string_length=${#a_pack_path}
-            local a_pack_path_sliced_length=$((a_pack_path_string_length-1))
-            local a_pack_path_no_slash_suffix=${a_pack_path:0:a_pack_path_sliced_length}
-            local package_folder_name=$a_pack_path_no_slash_suffix
+            local folder_name_at_level_1=`echo "$a_folder_suh_path_at_level_1" | sed 's|/$||'`
+            local folder_full_path_at_level_1="${a_node_modules_path}/${folder_name_at_level_1}"
 
-            local package_full_path="${a_node_modules_path}/${a_pack_path_no_slash_suffix}"
 
-            pack_index=$((pack_index+1))
 
-            local packageJSONFullPath="${package_full_path}/package.json"
+            local level_1_is_an_npm_scope=0
+            local all_folder_sub_paths_at_level_2=($a_folder_suh_path_at_level_1)
+            local all_folders_count_at_level_2=1
 
-            echo -en "${node_modules_folder_index_colorful_string}"
-            echo -e  "            package: \e[35m${pack_index}\e[0m/\e[33m${foundPacksCount}\e[0m"
-            echo -e  "${VE_line_60}"
 
-            if [ ! -f "${packageJSONFullPath}" ]; then
-                if [[ "${package_folder_name}" =~ ^@[_a-z0-9]+ ]]; then
-                    echo -e "\e[34mSEEMS TO BE A SCOPE\e[0m: \e[32m${package_folder_name}\e[0m"
+            local tgz_cache_folder_full_path="${tgzCacheRootFolderFullPath}"
+
+
+
+            local package_json_full_path_at_level_1="${folder_full_path_at_level_1}/package.json"
+
+            if [ ! -f "${package_json_full_path_at_level_1}" ]; then
+                if [[ "${folder_name_at_level_1}" =~ ^@[_a-z0-9]+ ]]; then
+                    echo -e "\e[34mSEEMS TO BE A SCOPE\e[0m: \e[32m${folder_name_at_level_1}\e[0m"
+                    echo
+
+                    level_1_is_an_npm_scope=1
+                    all_folder_sub_paths_at_level_2=(`ls -1 "${folder_full_path_at_level_1}"`)
+                    all_folders_count_at_level_2=${#all_folder_sub_paths_at_level_2[@]}
+
+                    tgz_cache_folder_full_path="${tgzCacheRootFolderFullPath}/${folder_name_at_level_1}"
+
+                    if [ $shouldDryRun -eq 0 ]; then
+                        mkdir -p "$tgz_cache_folder_full_path"
+                    fi
                 else
-                    echo -e "\e[31mINVALID (thus ignored)\e[0m: \e[32m${package_folder_name}\e[0m"
+                    echo -e "\e[31mINVALID (thus ignored)\e[0m: \e[32m${folder_name_at_level_1}\e[0m"
+                    continue
                 fi
-            else
-                local packageVersionLines=`cat "${packageJSONFullPath}" | grep "^\s*\"version\":\s*\"[0-9]\+\.[0-9]\+\."`
-                local package_version=`echo "${packageVersionLines}" | sed '/"[0-9\.]\+/!d' | sed 's/ \+"version": \+"//' | sed 's/",\? *$//'`
+            fi
 
-                if [ "$shouldDebug" -ne 0 ]; then
-                    echo -e "[DEBUG]: package_version=\"${package_version}\""
-                fi
 
-                local parent_folder_name=`dirname  "$package_full_path"`
-                parent_folder_name=`basename  "${parent_folder_name}"`
 
-                if [ "$shouldDebug" -ne 0 ]; then
-                    echo -e "[DEBUG]: parent_folder_name=\"$parent_folder_name\""
-                fi
 
-                local package_folder_name_prefix=''
+            local folder_index_at_level_2=0
+            local a_folder_suh_path_at_level_2
 
-                if [[ "$parent_folder_name" =~ ^@[_a-z0-9]+ ]]; then
-                    package_folder_name_prefix="${parent_folder_name}/"
+            for a_folder_suh_path_at_level_2 in ${all_folder_sub_paths_at_level_2[@]}; do
+                folder_index_at_level_2=$((folder_index_at_level_2+1))
+
+                local folder_name_at_level_2=`echo "$a_folder_suh_path_at_level_2" | sed 's|/$||'`
+                local folder_full_path_at_level_2="${folder_full_path_at_level_1}/${folder_name_at_level_2}"
+
+                if [ $level_1_is_an_npm_scope -eq 0 ]; then
+                    folder_full_path_at_level_2="${folder_full_path_at_level_1}"
                 fi
 
-                local package_full_name="${package_folder_name_prefix}${package_folder_name}"
 
-                echo -e "Package in the \e[33mnode_modules\e[0m folder:   \e[32m${package_folder_name}\e[0m@\e[35m${package_version}\e[0m"
+
+                if [ $level_1_is_an_npm_scope -eq 0 ]; then
+                    echo -e "${node_modules_folder_index_colorful_string}        package: \e[35m${folder_index_at_level_1}\e[0m/\e[33m${all_folders_count_at_level_1}\e[0m"
+                else
+                    echo -e "${node_modules_folder_index_colorful_string}        package: \e[35m${folder_index_at_level_1}\e[0m/\e[33m${all_folders_count_at_level_1}\e[0m - \e[35m${folder_index_at_level_2}\e[0m/\e[33m${all_folders_count_at_level_2}\e[0m"
+                fi
+
                 echo -e  "${VE_line_60}"
+
+
+
+                local package_json_full_path_at_level_2="${folder_full_path_at_level_2}/package.json"
+
+
+                if [ ! -f "${package_json_full_path_at_level_2}" ]; then
+                    echo -e "\e[31mINVALID (thus ignored)\e[0m: \e[32m${folder_name_at_level_2}\e[0m"
+                    continue
+                fi
+
+
+
+                local package_local_name="${folder_name_at_level_2}"
+                local package_full_name="${package_local_name}"
+
+                if [ $level_1_is_an_npm_scope -ne 0 ]; then
+                    package_full_name="${folder_name_at_level_1}/${package_local_name}"
+                fi
+
+
+
+                local all_lines_that_mentioned_version=`cat "${package_json_full_path_at_level_2}" | grep "^\s*\"version\":\s*\"[0-9]\+\.[0-9]\+\."`
+                local package_version=`echo "${all_lines_that_mentioned_version}" | sed '/"[0-9\.]\+/!d' | sed 's/ \+"version": \+"//' | sed 's/",\? *$//'`
+
+
+
+                echo -e "Package name: \e[32m${package_full_name}\e[0m@\e[35m${package_version}\e[0m"
+                echo -e "${VE_line_60}"
+
+
+
+                if [ "$shouldDebug" -ne 0 ]; then
+                    echo -e "[DEBUG]: folder_name_at_level_1=\"$folder_name_at_level_1\""
+                    echo -e "[DEBUG]: folder_name_at_level_2=\"$folder_name_at_level_2\""
+                fi
+
+
 
                 local allSearchingResults=$(npm  search\
                     --registry="${npmRegistryURL}"\
@@ -146,6 +189,7 @@ function searchRecursivelyAndPublishAll {
                     # echo -e "[DEBUG]: allSearchingResultsLength=${#allSearchingResults}"
                     echo -e "[DEBUG]: allSearchingResultsCount=${#allSearchingResults[@]}"
                     echo -e "[DEBUG]: allSearchingResults=${allSearchingResults[@]}"
+                    echo
                 fi
 
                 local shouldPublish=1
@@ -173,57 +217,70 @@ function searchRecursivelyAndPublishAll {
                     done
                 fi
 
+
+
                 if [ $shouldPublish -ne 1 ]; then
                     echo
                     # echo -e  "\e[31m${VE_line_10:0:7}\e[0m"
                     echo -e "\e[30;41mSKIPPED\e[0;0m"
                     echo -e  "\e[31m${VE_line_50}\e[0m"
-                else
-                    local taobao_tgz_url="https://registry.npm.taobao.org/${package_full_name}/download/${package_full_name}-${package_version}.tgz"
-
-                    echo -e  "\e[32m${VE_line_50}\e[0m"
-                    echo -e  "\e[30;42mdownloading tgz from taobao\e[0;0m \e[32m${package_full_name}\e[0m@\e[35m${package_version}\e[0m"
-                    echo -e  "\e[32m${VE_line_50}\e[0m"
-                    echo -e  "RESOURCE: \e[32m${taobao_tgz_url}\e[0m"
-
-                    if [ "$shouldDryRun" -eq 0 ]; then
-                        curl -L "${taobao_tgz_url}" > "${tgzCacheFolderPath}/${package_full_name}-${package_version}.tgz"
-                    else
-                        echo -e "\e[30;41m[PSUEDO]\e[0;0m curl -L \"${taobao_tgz_url}\" > \"${tgzCacheFolderPath}/${package_full_name}-${package_version}.tgz\""
-                    fi
-
-                    echo -e  "\e[32m${VE_line_50}\e[0m"
-
-                    echo -e "\e[30;42mnpm publishing\e[0;0m \e[32m${package_full_name}\e[0m@\e[35m${package_version}\e[0m"
-                    echo -e  "\e[32m${VE_line_50}\e[0m"
-                    # npm  publish  --registry="${npmRegistryURL}"  ${package_full_path}
-                    if [ "$shouldDryRun" -eq 0 ]; then
-                        npm  publish  --registry="${npmRegistryURL}"  "${tgzCacheFolderPath}/${package_full_name}-${package_version}.tgz"
-                    else
-                        echo -e "\e[30;41m[PSUEDO]\e[0;0m npm publish --registry=\"${npmRegistryURL}\" \"${tgzCacheFolderPath}/${package_full_name}-${package_version}.tgz\""
-                    fi
-                    echo -e  "\e[32m${VE_line_50}\e[0m"
+                    continue
                 fi
-            fi
+
+
+
+                local taobao_tgz_url="https://registry.npm.taobao.org/${package_full_name}/download/${package_full_name}-${package_version}.tgz"
+                local tgz_local_cache_file_full_path="${tgz_cache_folder_full_path}/${package_local_name}-${package_version}.tgz"
+
+
+
+                echo -e  "\e[32m${VE_line_50}\e[0m"
+                echo -e  "\e[30;42mdownloading tgz from taobao\e[0;0m \e[32m${package_full_name}\e[0m@\e[35m${package_version}\e[0m"
+                echo -e  "\e[32m${VE_line_50}\e[0m"
+                echo -e  "RESOURCE URL: \e[32m${taobao_tgz_url}\e[0m"
+                echo
+
+                if [ "$shouldDryRun" -eq 0 ]; then
+                    curl -L "${taobao_tgz_url}" > "${tgz_local_cache_file_full_path}"
+                else
+                    echo -e "\e[30;41m[PSUEDO ACTION]\e[0;0m curl -L \"${taobao_tgz_url}\" > \"${tgz_local_cache_file_full_path}\""
+                fi
+
+
+
+                echo
+                echo -e  "\e[32m${VE_line_50}\e[0m"
+                echo -e "\e[30;42mnpm publishing\e[0;0m \e[32m${package_full_name}\e[0m@\e[35m${package_version}\e[0m"
+                echo -e  "\e[32m${VE_line_50}\e[0m"
+
+                if [ "$shouldDryRun" -eq 0 ]; then
+                    npm  publish  --registry="${npmRegistryURL}"  "${tgz_local_cache_file_full_path}"
+                else
+                    echo -e "\e[30;41m[PSUEDO ACTION]\e[0;0m npm publish --registry=\"${npmRegistryURL}\" \"${tgz_local_cache_file_full_path}\""
+                fi
+
+                echo -e  "\e[32m${VE_line_50}\e[0m"
+
+            done # end of 'for' loop of level 2
 
             echo
             echo
             echo
-        done
+        done # end of 'for' loop of level 1
 
         echo
         echo -e "${VE_line_60}"
-        echo
-        echo
-        echo
-    done
 
-    echo
-    # echo -e "\e[32mSearching completed. Found \e[35m${foundCount}\e[32m \"node_module\" folders\e[0m"
-    echo
-    echo
+        echo
+        echo
+        echo
+    done # end of 'for' loop of all "node_modules"
+
+
 
     unset -f searchRecursivelyAndPublishAll
 }
+
+
 
 searchRecursivelyAndPublishAll  $*
