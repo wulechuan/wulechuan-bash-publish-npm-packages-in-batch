@@ -34,6 +34,17 @@ function searchRecursivelyAndPublishAll {
 
 
 
+    echo
+    echo -e "* * * * * * * * * * * * * * * * * * * * * * * *"
+    echo -e "*                                             *"
+    echo -e "*   wulechuan's npm package batch publisher   *"
+    echo -e "*                                             *"
+    echo -e "*   v1.0.0                       2020-07-27   *"
+    echo -e "*                                             *"
+    echo -e "* * * * * * * * * * * * * * * * * * * * * * * *"
+
+
+
     if [ $shouldDryRun -eq 0 ]; then
         mkdir -p "${tgzCacheRootFolderFullPath}"
     fi
