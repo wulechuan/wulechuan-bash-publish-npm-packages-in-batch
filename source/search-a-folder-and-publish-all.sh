@@ -17,8 +17,7 @@ function searchRecursivelyAndPublishAll {
     # ───────────────────────────────────────────────────────────────────────────
 
     local shouldDryRun=0
-    local shouldDebug=1
-    local tempFileNameOfSearchingResult="wlc-npm-search-result-${RANDOM}.tmp"
+    local shouldDebug=0
     local tgzCacheFolderName='taobao-npm-tgz-caches'
 
     local VE_line_5='─────'
@@ -60,8 +59,23 @@ function searchRecursivelyAndPublishAll {
         local foundPacksCount=${#packPaths[@]}
         local a_pack_path
         local pack_index=0
+        # local shouldStopWhenNextLoopBegin=0
 
         for a_pack_path in ${packPaths[@]}; do
+            # if [ $shouldStopWhenNextLoopBegin -ne 0 ]; then return; fi
+
+            # if [[ ! "$a_pack_path" =~ mkdirp ]]; then
+            #     continue;
+            # else
+            #     echo TEMP CODE
+            #     echo TEMP CODE
+            #     echo TEMP CODE
+            #     echo TEMP CODE
+            #     echo TEMP CODE
+            #     echo TEMP CODE
+            #     shouldStopWhenNextLoopBegin=1
+            # fi
+
             local a_pack_path_string_length=${#a_pack_path}
             local a_pack_path_sliced_length=$((a_pack_path_string_length-1))
             local a_pack_path_no_slash_suffix=${a_pack_path:0:a_pack_path_sliced_length}
@@ -87,14 +101,14 @@ function searchRecursivelyAndPublishAll {
                 local packageVersionLines=`cat "${packageJSONFullPath}" | grep "^\s*\"version\":\s*\"[0-9]\+\.[0-9]\+\."`
                 local package_version=`echo "${packageVersionLines}" | sed '/"[0-9\.]\+/!d' | sed 's/ \+"version": \+"//' | sed 's/",\? *$//'`
 
-                if [ ! "$shouldDebug" -eq 0 ]; then
+                if [ "$shouldDebug" -ne 0 ]; then
                     echo -e "[DEBUG]: package_version=\"${package_version}\""
                 fi
 
                 local parent_folder_name=`dirname  "$package_full_path"`
                 parent_folder_name=`basename  "${parent_folder_name}"`
 
-                if [ ! "$shouldDebug" -eq 0 ]; then
+                if [ "$shouldDebug" -ne 0 ]; then
                     echo -e "[DEBUG]: parent_folder_name=\"$parent_folder_name\""
                 fi
 
@@ -109,44 +123,55 @@ function searchRecursivelyAndPublishAll {
                 echo -e "Package in the \e[33mnode_modules\e[0m folder:   \e[32m${package_folder_name}\e[0m@\e[35m${package_version}\e[0m"
                 echo -e  "${VE_line_60}"
 
-                npm  search\
+                local allSearchingResults=$(npm  search\
+                    --registry="${npmRegistryURL}"\
                     --no-description\
                     --parseable "${package_full_name}"\
-                    --registry="${npmRegistryURL}"\
-                    | sed  's/\t[^\t]\+$//g'\
-                    | sed  's/\t=[^\t]\+//g'\
-                    | sed  's/\t[0-9]\{4\}\-[0-9]\{2\}\-[0-9]\{2\}//'\
-                    | sed  's/\t\+$//'\
-                    | grep "^${package_full_name}\s"\
-                    > ~/"${tempFileNameOfSearchingResult}"
+                    | sed    's/\t[^\t]\+$//g'\
+                    | sed    's/\t=[^\t]\+//g'\
+                    | sed    's/\t[0-9]\{4\}\-[0-9]\{2\}\-[0-9]\{2\}//'\
+                    | sed    's/\s\+$//'\
+                    | grep   "^${package_full_name}\s"\
+                    | sed -e 's/.*/"&"/'
+                )
+                eval allSearchingResults=(${allSearchingResults})
 
-                local searchingResult=`head -n 1 ~/"${tempFileNameOfSearchingResult}"`
-                rm -f ~/"${tempFileNameOfSearchingResult}"
-
-                if [ ! "$shouldDebug" -eq 0 ]; then
-                    echo -e "[DEBUG]: searchingResult=\"$searchingResult\""
+                if [ "$shouldDebug" -ne 0 ]; then
+                    # echo -e "[DEBUG]: allSearchingResultsLength=${#allSearchingResults}"
+                    echo -e "[DEBUG]: allSearchingResultsCount=${#allSearchingResults[@]}"
+                    echo -e "[DEBUG]: allSearchingResults=${allSearchingResults[@]}"
                 fi
 
-                local shouldPublish=0
+                local shouldPublish=1
 
-                if [ -z "$searchingResult" ]; then
-                    shouldPublish=1
+                if [ ${#allSearchingResults[@]} -ne 0 ]; then
+                    local searchingSingleResultSingleSegment
+
+                    for searchingSingleResultSingleSegment in ${allSearchingResults[@]}; do
+                        if [[ "$searchingSingleResultSingleSegment" =~ ${package_full_name} ]]; then
+                            continue
+                        fi
+
+                        local searchingResultVersion=${searchingSingleResultSingleSegment}
+
+                        # if [ "$shouldDebug" -ne 0 ]; then
+                        #     echo -e "[DEBUG]: searchingResultVersion=\"$searchingResultVersion\""
+                        # fi
+
+                        if [ "${package_version}" == "${searchingResultVersion}" ]; then
+                            echo -e "\e[30;41m${npmRegistryURL}\e[0;0m \e[31mALREADY EXISTS:         \e[32m${package_full_name}\e[0m@\e[31m${searchingResultVersion}\e[0m"
+                            shouldPublish=0
+                        else
+                            echo -e "\e[30;44m${npmRegistryURL}\e[0;0m \e[34mEXISTS ANOTHER VERSION: \e[32m${package_full_name}\e[0m@\e[34m${searchingResultVersion}\e[0m"
+                        fi
+                    done
+                fi
+
+                if [ $shouldPublish -ne 1 ]; then
+                    echo -e  "\e[31m${VE_line_50}\e[0m"
+                    echo -e "\e[30;41mSKIPPED\e[0;0m"
+                    echo -e  "\e[31m${VE_line_50}\e[0m"
                 else
-                    local searchingResultVersion=`echo "${searchingResult}" | sed 's/^[^\t]\+\t\+//'`
-
-                    if [ ! "$shouldDebug" -eq 0 ]; then
-                        echo -e "[DEBUG]: searchingResultVersion=\"$searchingResultVersion\""
-                    fi
-
-                    if [ "${package_version}" == "${searchingResultVersion}" ]; then
-                        echo -e "\e[30;41m${npmRegistryURL}\e[0;0m \e[31mALREADY EXISTS: \e[32m${package_full_name}\e[0m@\e[35m${searchingResultVersion}\e[0m"
-                    else
-                        echo -e "\e[30;42m${npmRegistryURL}\e[0;0m \e[34mEXISTS ANOTHER VERSION: \e[34m${package_full_name}\e[0m@\e[35m${searchingResultVersion}\e[0m"
-                        shouldPublish=1
-                    fi
-                fi
-
-                if [ $shouldPublish -eq 1 ]; then
                     local taobao_tgz_url="https://registry.npm.taobao.org/${package_full_name}/download/${package_full_name}-${package_version}.tgz"
 
                     echo -e  "\e[32m${VE_line_50}\e[0m"
