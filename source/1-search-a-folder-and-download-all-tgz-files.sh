@@ -1,6 +1,29 @@
 #!/bin/bash
 
-function searchRecursivelyAndPublishAll {
+echo
+echo -e "* * * * * * * * * * * * * * * * * * * * * * * *"
+echo -e "*                                             *"
+echo -e "*   \e[32mwulechuan's npm package batch \e[30;43mdownloader\e[0;0m  *"
+echo -e "*                                             *"
+echo -e "*   \e[35mv2.0.0\e[0m                       2020-07-27   *"
+echo -e "*                                             *"
+echo -e "* * * * * * * * * * * * * * * * * * * * * * * *"
+echo
+
+
+
+VE_line_5='─────'
+VE_line_10="${VE_line_5}${VE_line_5}"
+VE_line_20="${VE_line_10}${VE_line_10}"
+VE_line_30="${VE_line_20}${VE_line_10}"
+VE_line_40="${VE_line_20}${VE_line_20}"
+VE_line_50="${VE_line_20}${VE_line_20}${VE_line_10}"
+VE_line_60="${VE_line_20}${VE_line_20}${VE_line_20}"
+VE_line_80="${VE_line_60}${VE_line_20}"
+
+
+
+function search_npm_packages_recursively_and_download_tgz_files {
     local searchingRootPath=$1 # default: '.'
     local npmRegistryURL=$2    # default: 'http://localhost:4873'
 
@@ -18,30 +41,11 @@ function searchRecursivelyAndPublishAll {
 
     local tgzCacheRootFolderFullPath='/c/taobao-npm-tgz-caches'
 
-    local shouldDryRun=0
+    local shouldDryRun=1
     local shouldDebug=0
     local shouldSkipDownloadingIfTgzCacheExists=1
 
-
-
-    local VE_line_5='─────'
-    local VE_line_10="${VE_line_5}${VE_line_5}"
-    local VE_line_20="${VE_line_10}${VE_line_10}"
-    local VE_line_50="${VE_line_20}${VE_line_20}${VE_line_10}"
-    local VE_line_60="${VE_line_20}${VE_line_20}${VE_line_20}"
-
     # ───────────────────────────────────────────────────────────────────────────
-
-
-
-    echo
-    echo -e "* * * * * * * * * * * * * * * * * * * * * * * *"
-    echo -e "*                                             *"
-    echo -e "*   wulechuan's npm package batch publisher   *"
-    echo -e "*                                             *"
-    echo -e "*   v1.0.0                       2020-07-27   *"
-    echo -e "*                                             *"
-    echo -e "* * * * * * * * * * * * * * * * * * * * * * * *"
 
 
 
@@ -157,7 +161,7 @@ function searchRecursivelyAndPublishAll {
                     echo -e "${node_modules_folder_index_colorful_string}        package: \e[35m${folder_index_at_level_1}\e[0m/\e[33m${all_folders_count_at_level_1}\e[0m - \e[35m${folder_index_at_level_2}\e[0m/\e[33m${all_folders_count_at_level_2}\e[0m"
                 fi
 
-                echo -e  "${VE_line_60}"
+                echo -e  "${VE_line_80}"
 
 
 
@@ -207,7 +211,7 @@ function searchRecursivelyAndPublishAll {
 
 
                 echo -e "Package name: \e[32m${package_full_name}\e[0m@\e[35m${package_version}\e[0m"
-                echo -e "${VE_line_60}"
+                echo -e "${VE_line_80}"
 
 
 
@@ -218,70 +222,9 @@ function searchRecursivelyAndPublishAll {
 
 
 
-                local allSearchingResults=$(npm  search\
-                    --registry="${npmRegistryURL}"\
-                    --no-description\
-                    --parseable "${package_full_name}"\
-                    | sed    's/\t[^\t]\+$//g'\
-                    | sed    's/\t=[^\t]\+//g'\
-                    | sed    's/\t[0-9]\{4\}\-[0-9]\{2\}\-[0-9]\{2\}//'\
-                    | sed    's/\s\+$//'\
-                    | grep   "^${package_full_name}\s"\
-                    | sed -e 's/.*/"&"/'
-                )
-
-                echo
-                eval allSearchingResults=(${allSearchingResults})
-
-                if [ "$shouldDebug" -ne 0 ]; then
-                    # echo -e "[DEBUG]: allSearchingResultsLength=${#allSearchingResults}"
-                    echo -e "[DEBUG]: allSearchingResultsCount=${#allSearchingResults[@]}"
-                    echo -e "[DEBUG]: allSearchingResults=${allSearchingResults[@]}"
-                    echo
-                fi
-
-                local shouldPublish=1
-
-                if [ ${#allSearchingResults[@]} -ne 0 ]; then
-                    local searchingSingleResultSingleSegment
-
-                    for searchingSingleResultSingleSegment in ${allSearchingResults[@]}; do
-                        if [[ "$searchingSingleResultSingleSegment" =~ ${package_full_name} ]]; then
-                            continue
-                        fi
-
-                        local searchingResultVersion=${searchingSingleResultSingleSegment}
-
-                        # if [ "$shouldDebug" -ne 0 ]; then
-                        #     echo -e "[DEBUG]: searchingResultVersion=\"$searchingResultVersion\""
-                        # fi
-
-                        if [ "${package_version}" == "${searchingResultVersion}" ]; then
-                            echo -e "\e[30;41m${npmRegistryURL}\e[0;0m \e[31mALREADY EXISTS:         \e[32m${package_full_name}\e[0m@\e[31m${searchingResultVersion}\e[0m"
-                            shouldPublish=0
-                        else
-                            echo -e "\e[30;44m${npmRegistryURL}\e[0;0m \e[34mEXISTS ANOTHER VERSION: \e[32m${package_full_name}\e[0m@\e[34m${searchingResultVersion}\e[0m"
-                        fi
-                    done
-                fi
-
-
-
-                if [ $shouldPublish -ne 1 ]; then
-                    echo
-                    # echo -e  "\e[31m${VE_line_10:0:7}\e[0m"
-                    echo -e "\e[30;41mPUBLISHING SKIPPED\e[0;0m"
-                    echo -e  "\e[31m${VE_line_50}\e[0m"
-                    echo
-                    echo
-                    echo
-                    continue
-                fi
-
-
-
                 local taobao_tgz_url="https://registry.npm.taobao.org/${package_full_name}/download/${package_full_name}-${package_version}.tgz"
-                local tgz_local_cache_file_full_path="${tgz_cache_folder_full_path}/${package_local_name}-${package_version}.tgz"
+                local tgz_local_cache_file_full_path="${tgz_cache_folder_full_path}/${package_local_name}@${package_version}.tgz"
+
 
 
                 local shouldDownload=1
@@ -291,39 +234,22 @@ function searchRecursivelyAndPublishAll {
                     fi
                 fi
 
-                if [ $shouldDownload -ne 0 ]; then
-                    echo -e "\e[32m${VE_line_50}\e[0m"
+                if [ $shouldDownload -eq 0 ]; then
+                    echo -e "\e[30;43mDOWNLOADING SKIPPED\e[0;0m \e[32m${package_full_name}\e[0m@\e[35m${package_version}\e[0m"
+                    echo -e "\e[33m${VE_line_40}\e[0m"
+                    echo
+                else
                     echo -e "\e[30;42mDOWNLOADING TGZ FROM TAOBAO REGISTRY\e[0;0m \e[32m${package_full_name}\e[0m@\e[35m${package_version}\e[0m"
-                    echo -e "\e[32m${VE_line_50}\e[0m"
+                    echo -e "\e[32m${VE_line_40}\e[0m"
                     echo -e "RESOURCE URL: \e[32m${taobao_tgz_url}\e[0m"
                     echo
-                else
-                    echo -e "\e[33m${VE_line_50}\e[0m"
-                    echo -e "\e[30;43mDOWNLOADING SKIPPED\e[0;0m \e[32m${package_full_name}\e[0m@\e[35m${package_version}\e[0m"
-                    echo -e "\e[33m${VE_line_50}\e[0m"
-                    echo
+
+                    if [ "$shouldDryRun" -eq 0 ]; then
+                        curl -L "${taobao_tgz_url}" > "${tgz_local_cache_file_full_path}"
+                    else
+                        echo -e "\e[30;41m[PSUEDO ACTION]\e[0;0m curl -L \"${taobao_tgz_url}\" > \"${tgz_local_cache_file_full_path}\""
+                    fi
                 fi
-
-                if [ "$shouldDryRun" -eq 0 ]; then
-                    curl -L "${taobao_tgz_url}" > "${tgz_local_cache_file_full_path}"
-                else
-                    echo -e "\e[30;41m[PSUEDO ACTION]\e[0;0m curl -L \"${taobao_tgz_url}\" > \"${tgz_local_cache_file_full_path}\""
-                fi
-
-
-
-                echo
-                echo -e  "\e[32m${VE_line_50}\e[0m"
-                echo -e "\e[30;42mnpm publishing\e[0;0m \e[32m${package_full_name}\e[0m@\e[35m${package_version}\e[0m"
-                echo -e  "\e[32m${VE_line_50}\e[0m"
-
-                if [ "$shouldDryRun" -eq 0 ]; then
-                    npm  publish  --registry="${npmRegistryURL}"  "${tgz_local_cache_file_full_path}"
-                else
-                    echo -e "\e[30;41m[PSUEDO ACTION]\e[0;0m npm publish --registry=\"${npmRegistryURL}\" \"${tgz_local_cache_file_full_path}\""
-                fi
-
-                echo -e  "\e[32m${VE_line_50}\e[0m"
 
                 echo
                 echo
@@ -338,12 +264,20 @@ function searchRecursivelyAndPublishAll {
         echo
         echo
     done # end of 'for' loop of all "node_modules"
-
-
-
-    unset -f searchRecursivelyAndPublishAll
 }
 
 
 
-searchRecursivelyAndPublishAll  $*
+search_npm_packages_recursively_and_download_tgz_files   $*
+
+
+
+unset -f search_npm_packages_recursively_and_download_tgz_files
+unset    VE_line_5
+unset    VE_line_10
+unset    VE_line_20
+unset    VE_line_30
+unset    VE_line_40
+unset    VE_line_50
+unset    VE_line_60
+unset    VE_line_80
