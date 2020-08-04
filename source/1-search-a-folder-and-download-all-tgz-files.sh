@@ -41,7 +41,7 @@ function search_npm_packages_recursively_and_download_tgz_files {
 
     local tgzCacheRootFolderFullPath='/c/taobao-npm-tgz-caches'
 
-    local shouldDryRun=1
+    local shouldDryRun=0
     local shouldDebug=0
     local shouldSkipDownloadingIfTgzCacheExists=1
 
