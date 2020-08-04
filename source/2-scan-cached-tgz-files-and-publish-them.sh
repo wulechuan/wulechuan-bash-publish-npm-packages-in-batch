@@ -148,6 +148,8 @@ function for_all_cached_tgz_files_try_publish_them_to_a_registry {
 
 
 
+    local publishing___exitCodeOfPreviousCommand=0
+
     if [[ "$publishing___tgz_cache_root_folder_path" =~ --tgz-cache-root-folder= ]]; then
         publishing___tgz_cache_root_folder_path=${publishing___tgz_cache_root_folder_path:24}
     fi
@@ -176,12 +178,16 @@ function for_all_cached_tgz_files_try_publish_them_to_a_registry {
 
 
 
-    local publishing___all_tgz_file_sub_paths=(`find "${publishing___tgz_cache_root_folder_path}" -name '*.tgz'`)
+    local publishing___tgz_cache_known_published_packages_folder_path="${publishing___tgz_cache_root_folder_path}/known-published"
+    local publishing___tgz_cache_known_new_packages_folder_path="${publishing___tgz_cache_root_folder_path}/new"
+
+
+    local publishing___all_tgz_file_sub_paths=(`find "${publishing___tgz_cache_known_new_packages_folder_path}" -name '*.tgz'`)
     local publishing___all_tgz_files_count=${#publishing___all_tgz_file_sub_paths[@]}
 
     echo
     echo -e "$VE_line_80"
-    echo -e "Scanned folde:   \"\e[33m${publishing___tgz_cache_root_folder_path}\e[0m\""
+    echo -e "Scanned folde:   \"\e[33m${publishing___tgz_cache_known_new_packages_folder_path}\e[0m\""
     echo -e "Found .tgz files: \e[35m${publishing___all_tgz_files_count}\e[0m"
     echo -e "$VE_line_80"
     echo
@@ -189,24 +195,29 @@ function for_all_cached_tgz_files_try_publish_them_to_a_registry {
     echo
 
     # if [ "$publishing___should_debug" == 'yes' ]; then
-    #     echo -e "[DEBUG]: publishing___tgz_cache_root_folder_path=\"${publishing___tgz_cache_root_folder_path}\""
+    #     echo -e "[DEBUG]: publishing___tgz_cache_known_new_packages_folder_path=\"${publishing___tgz_cache_known_new_packages_folder_path}\""
     #     echo -e "[DEBUG]: publishing___all_tgz_file_sub_paths=${publishing___all_tgz_files_count}"
     #     echo
     # fi
 
 
 
-    local publishing___a_tgz_file_sub_path
+    local publishing___tgz_file_sub_path
+    local publishing___tgz_file_containing_folder_sub_path
+    local publishing___tgz_file_full_path
     local publishing___tgz_file_index=0
 
-    for publishing___a_tgz_file_sub_path in ${publishing___all_tgz_file_sub_paths[@]}; do
+    for publishing___tgz_file_full_path in ${publishing___all_tgz_file_sub_paths[@]}; do
         publishing___tgz_file_index=$((publishing___tgz_file_index+1))
 
-        # local publishing___tgz_file_full_path="${publishing___tgz_cache_root_folder_path}/${publishing___a_tgz_file_sub_path}"
-        local publishing___tgz_file_full_path="${publishing___a_tgz_file_sub_path}"
+        # local publishing___tgz_file_full_path="${publishing___tgz_cache_known_new_packages_folder_path}/${publishing___tgz_file_sub_path}"
+
         local publishing___tgz_file_name=`basename              "${publishing___tgz_file_full_path}"`
         local publishing___tgz_file_parent_folder_name=`dirname "${publishing___tgz_file_full_path}"`
         publishing___tgz_file_parent_folder_name=`basename      "${publishing___tgz_file_parent_folder_name}"`
+
+        publishing___tgz_file_containing_folder_sub_path=""
+
 
         local publishing___package_scope=''
         local publishing___package_local_name=`echo "${publishing___tgz_file_name}" | sed 's/@[^@]\+$//'`
@@ -214,7 +225,12 @@ function for_all_cached_tgz_files_try_publish_them_to_a_registry {
 
         if [[ "$publishing___tgz_file_parent_folder_name" =~ ^@[_a-z0-9]+ ]]; then
             publishing___package_scope="${publishing___tgz_file_parent_folder_name}"
+            publishing___tgz_file_sub_path="${publishing___package_scope}/${publishing___tgz_file_sub_path}"
+            publishing___tgz_file_containing_folder_sub_path="${publishing___package_scope}"
         fi
+
+        publishing___tgz_file_sub_path="${publishing___tgz_file_containing_folder_sub_path}/${publishing___tgz_file_name}"
+
 
         local publishing___package_full_name_with_version_colorful
         if [ -z "${publishing___package_scope}" ]; then
@@ -231,9 +247,11 @@ function for_all_cached_tgz_files_try_publish_them_to_a_registry {
         echo -e "${VE_line_80}"
 
         if [ "$publishing___should_debug" == 'yes' ]; then
-            echo -e "[DEBUG]: parent_folder     =\"\e[33m${publishing___tgz_file_parent_folder_name}\e[0m\""
-            echo -e "[DEBUG]: package_local_name=\"\e[32m${publishing___package_local_name}\e[0m\""
-            echo -e "[DEBUG]: package_version   =\"\e[35m${publishing___package_version}\e[0m\""
+            echo -e "[DEBUG]: parent_folder                      =\"\e[33m${publishing___tgz_file_parent_folder_name}\e[0m\""
+            echo -e "[DEBUG]: package_local_name                 =\"\e[32m${publishing___package_local_name}\e[0m\""
+            echo -e "[DEBUG]: package_version                    =\"\e[35m${publishing___package_version}\e[0m\""
+            echo -e "[DEBUG]: tgz_file_sub_path                  =\"\e[35m${publishing___tgz_file_sub_path}\e[0m\""
+            echo -e "[DEBUG]: tgz_file_containing_folder_sub_path=\"\e[35m${publishing___tgz_file_containing_folder_sub_path}\e[0m\""
             echo
         fi
 
@@ -266,6 +284,16 @@ function for_all_cached_tgz_files_try_publish_them_to_a_registry {
             echo -e  "\e[31m${VE_line_40}\e[0m"
             echo -e "\e[30;41mPUBLISHING SKIPPED\e[0;0m"
             echo -e  "\e[31m${VE_line_40}\e[0m"
+
+            if [ "$publishing___should_dry_run" == 'yes' ]; then
+                echo -e  "\e[30;41m[PSUEDO ACTION]\e[0;0m MOVE TO BACKUP FOLDER: \"\e[33m${publishing___tgz_file_containing_folder_sub_path}/${publishing___tgz_file_name}\e[0m\""
+            else
+                echo -e  "\e[31mMOVE TO BACKUP FOLDER:\e[0m \"\e[33m${publishing___tgz_file_containing_folder_sub_path}/${publishing___tgz_file_name}\e[0m\""
+                mkdir -p "${publishing___tgz_cache_known_published_packages_folder_path}/${publishing___tgz_file_containing_folder_sub_path}"
+                mv  -f  "${publishing___tgz_file_full_path}" "${publishing___tgz_cache_known_published_packages_folder_path}/${publishing___tgz_file_containing_folder_sub_path}/${publishing___tgz_file_name}"
+            fi
+            echo -e  "\e[31m${VE_line_40}\e[0m"
+
             echo
             echo
             echo
@@ -282,6 +310,19 @@ function for_all_cached_tgz_files_try_publish_them_to_a_registry {
             echo -e "\e[30;41m[PSUEDO ACTION]\e[0;0m npm publish --registry=\"${publishing___npm_registry_url}\" \"${publishing___tgz_file_full_path}\""
         else
             npm  publish  --registry="${publishing___npm_registry_url}"  "${publishing___tgz_file_full_path}"
+            publishing___exitCodeOfPreviousCommand=$?
+
+            if [ $publishing___exitCodeOfPreviousCommand -eq 0 ]; then
+                echo -e  "\e[32m${VE_line_40}\e[0m"
+
+                if [ "$publishing___should_dry_run" == 'yes' ]; then
+                    echo -e  "\e[30;41m[PSUEDO ACTION]\e[0;0m MOVE TO BACKUP FOLDER: \"\e[33m${publishing___tgz_file_containing_folder_sub_path}/${publishing___tgz_file_name}\e[0m\""
+                else
+                    echo -e  "\e[33mMOVE TO BACKUP FOLDER:\e[0m \"\e[33m${publishing___tgz_file_containing_folder_sub_path}/${publishing___tgz_file_name}\e[0m\""
+                    mkdir -p "${publishing___tgz_cache_known_published_packages_folder_path}/${publishing___tgz_file_containing_folder_sub_path}"
+                    mv  -f  "${publishing___tgz_file_full_path}" "${publishing___tgz_cache_known_published_packages_folder_path}/${publishing___tgz_file_containing_folder_sub_path}/${publishing___tgz_file_name}"
+                fi
+            fi
         fi
 
         echo -e  "\e[32m${VE_line_40}\e[0m"

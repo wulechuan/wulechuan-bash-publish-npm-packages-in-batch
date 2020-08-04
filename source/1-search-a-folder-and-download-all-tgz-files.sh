@@ -48,9 +48,12 @@ function search_npm_packages_recursively_and_download_tgz_files {
     # ───────────────────────────────────────────────────────────────────────────
 
 
+    local tgzCacheRootFolderFullPath_newPackages="${tgzCacheRootFolderFullPath}/new"
+    local tgzCacheRootFolderFullPath_knownPublishedPackages="${tgzCacheRootFolderFullPath}/known-published"
 
     if [ $shouldDryRun -eq 0 ]; then
-        mkdir -p "${tgzCacheRootFolderFullPath}"
+        mkdir -p "${tgzCacheRootFolderFullPath_newPackages}"
+        mkdir -p "${tgzCacheRootFolderFullPath_knownPublishedPackages}"
     fi
 
     echo
@@ -105,7 +108,8 @@ function search_npm_packages_recursively_and_download_tgz_files {
             local all_folders_count_at_level_2=1
 
 
-            local tgz_cache_folder_full_path="${tgzCacheRootFolderFullPath}"
+            local tgz_cache_folder_full_path1="${tgzCacheRootFolderFullPath_newPackages}"
+            local tgz_cache_folder_full_path2="${tgzCacheRootFolderFullPath_knownPublishedPackages}"
 
 
 
@@ -120,10 +124,11 @@ function search_npm_packages_recursively_and_download_tgz_files {
                     all_folder_sub_paths_at_level_2=(`ls -1 "${folder_full_path_at_level_1}"`)
                     all_folders_count_at_level_2=${#all_folder_sub_paths_at_level_2[@]}
 
-                    tgz_cache_folder_full_path="${tgzCacheRootFolderFullPath}/${folder_name_at_level_1}"
+                    tgz_cache_folder_full_path1="${tgzCacheRootFolderFullPath_newPackages}/${folder_name_at_level_1}"
+                    tgz_cache_folder_full_path2="${tgzCacheRootFolderFullPath_knownPublishedPackages}/${folder_name_at_level_1}"
 
                     if [ $shouldDryRun -eq 0 ]; then
-                        mkdir -p "$tgz_cache_folder_full_path"
+                        mkdir -p "$tgz_cache_folder_full_path1"
                     fi
                 else
                     echo -e "\e[31mINVALID (thus ignored)\e[0m: \e[32m${folder_name_at_level_1}\e[0m"
@@ -223,32 +228,37 @@ function search_npm_packages_recursively_and_download_tgz_files {
 
 
                 local taobao_tgz_url="https://registry.npm.taobao.org/${package_full_name}/download/${package_full_name}-${package_version}.tgz"
-                local tgz_local_cache_file_full_path="${tgz_cache_folder_full_path}/${package_local_name}@${package_version}.tgz"
+                local tgz_local_cache_file_full_path1="${tgz_cache_folder_full_path1}/${package_local_name}@${package_version}.tgz"
+                local tgz_local_cache_file_full_path2="${tgz_cache_folder_full_path2}/${package_local_name}@${package_version}.tgz"
 
 
 
-                local shouldDownload=1
+                local shouldNotDownload=0
                 if [ $shouldSkipDownloadingIfTgzCacheExists -ne 0 ]; then
-                    if [ -f "${tgz_local_cache_file_full_path}" ]; then
-                        shouldDownload=0
+                    if [ -f "${tgz_local_cache_file_full_path1}" ]; then
+                        shouldNotDownload=1
+                    fi
+
+                    if [ -f "${tgz_local_cache_file_full_path2}" ]; then
+                        shouldNotDownload=2
                     fi
                 fi
 
-                if [ $shouldDownload -eq 0 ]; then
-                    echo -e "\e[30;43mDOWNLOADING SKIPPED\e[0;0m \e[32m${package_full_name}\e[0m@\e[35m${package_version}\e[0m"
-                    echo -e "\e[33m${VE_line_40}\e[0m"
-                    echo
-                else
+                if [ $shouldNotDownload -ne 0 ]; then
                     echo -e "\e[30;42mDOWNLOADING TGZ FROM TAOBAO REGISTRY\e[0;0m \e[32m${package_full_name}\e[0m@\e[35m${package_version}\e[0m"
                     echo -e "\e[32m${VE_line_40}\e[0m"
                     echo -e "RESOURCE URL: \e[32m${taobao_tgz_url}\e[0m"
                     echo
 
                     if [ "$shouldDryRun" -eq 0 ]; then
-                        curl -L "${taobao_tgz_url}" > "${tgz_local_cache_file_full_path}"
+                        curl -L "${taobao_tgz_url}" > "${tgz_local_cache_file_full_path1}"
                     else
-                        echo -e "\e[30;41m[PSUEDO ACTION]\e[0;0m curl -L \"${taobao_tgz_url}\" > \"${tgz_local_cache_file_full_path}\""
+                        echo -e "\e[30;41m[PSUEDO ACTION]\e[0;0m curl -L \"${taobao_tgz_url}\" > \"${tgz_local_cache_file_full_path1}\""
                     fi
+                else
+                    echo -e "\e[30;43mDOWNLOADING SKIPPED\e[0;0m \e[32m${package_full_name}\e[0m@\e[35m${package_version}\e[0m"
+                    echo -e "\e[33m${VE_line_40}\e[0m"
+                    echo
                 fi
 
                 echo
