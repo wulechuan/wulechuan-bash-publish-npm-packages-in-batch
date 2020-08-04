@@ -244,7 +244,7 @@ function search_npm_packages_recursively_and_download_tgz_files {
                     fi
                 fi
 
-                if [ $shouldNotDownload -ne 0 ]; then
+                if [ $shouldNotDownload -eq 0 ]; then
                     echo -e "\e[30;42mDOWNLOADING TGZ FROM TAOBAO REGISTRY\e[0;0m \e[32m${package_full_name}\e[0m@\e[35m${package_version}\e[0m"
                     echo -e "\e[32m${VE_line_40}\e[0m"
                     echo -e "RESOURCE URL: \e[32m${taobao_tgz_url}\e[0m"
