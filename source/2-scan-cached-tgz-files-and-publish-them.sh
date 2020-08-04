@@ -268,14 +268,15 @@ function for_all_cached_tgz_files_try_publish_them_to_a_registry {
 
 
 
-        querying_an_npm_package_in_a_registry \
-            --npm-registry-url="${publishing___npm_registry_url}" \
-            --package-scope="${publishing___package_scope}" \
-            --package-local-name="${publishing___package_local_name}" \
-            --package-version="${publishing___package_version}" \
-            --should-debug="${publishing___should_debug}"
+        # querying_an_npm_package_in_a_registry \
+        #     --npm-registry-url="${publishing___npm_registry_url}" \
+        #     --package-scope="${publishing___package_scope}" \
+        #     --package-local-name="${publishing___package_local_name}" \
+        #     --package-version="${publishing___package_version}" \
+        #     --should-debug="${publishing___should_debug}"
 
-        local publishing___should_proceed=$?
+        # local publishing___should_proceed=$?
+        local publishing___should_proceed=0
         # echo -e "[DEBUG]: found exact match? (1 means 'yes') ${publishing___should_proceed}"
 
 
@@ -302,7 +303,7 @@ function for_all_cached_tgz_files_try_publish_them_to_a_registry {
 
 
 
-        echo -e  "\e[32m${VE_line_40}\e[0m"
+        # echo -e  "\e[32m${VE_line_40}\e[0m"
         echo -e "\e[30;42mPUBLISHING PACKAGE\e[0;0m ${publishing___package_full_name_with_version_colorful}"
         echo -e  "\e[32m${VE_line_40}\e[0m"
 
