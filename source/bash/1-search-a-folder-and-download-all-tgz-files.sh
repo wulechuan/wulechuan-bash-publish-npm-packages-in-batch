@@ -3,9 +3,9 @@
 echo
 echo -e "* * * * * * * * * * * * * * * * * * * * * * * *"
 echo -e "*                                             *"
-echo -e "*   \e[32mwulechuan's npm package batch \e[30;43mdownloader\e[0;0m  *"
+echo -e "*   \e[32mWulechuan's npm package batch \e[30;43mdownloader\e[0;0m  *"
 echo -e "*                                             *"
-echo -e "*   \e[35mv2.0.0\e[0m                       2020-07-27   *"
+echo -e "*   \e[35mv2.5.0\e[0m                       2020-08-07   *"
 echo -e "*                                             *"
 echo -e "* * * * * * * * * * * * * * * * * * * * * * * *"
 echo

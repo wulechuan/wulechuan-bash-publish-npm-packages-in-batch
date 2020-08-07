@@ -1,11 +1,18 @@
 #!/bin/bash
 
+wulechuan_npm_package_batch_publisher___version='v2.5.0'
+wulechuan_npm_package_batch_publisher___release_date='2020-08-07'
+wulechuan_npm_package_batch_publisher___tgz_cache_root_folder_default_full_path='/c/taobao-npm-tgz-caches'
+wulechuan_npm_package_batch_publisher___npm_default_registry_to_publish_packages_to='http://localhost:4873'
+
+
+
 echo
 echo -e "* * * * * * * * * * * * * * * * * * * * * * * *"
 echo -e "*                                             *"
-echo -e "*   \e[32mwulechuan's npm package batch \e[30;41mpublisher\e[0;0m   *"
+echo -e "*   \e[32mWulechuan's npm package batch \e[30;41mpublisher\e[0;0m   *"
 echo -e "*                                             *"
-echo -e "*   \e[35mv2.0.0\e[0m                       2020-07-27   *"
+echo -e "*   \e[35m$wulechuan_npm_package_batch_publisher___version\e[0m                       $wulechuan_npm_package_batch_publisher___release_date   *"
 echo -e "*                                             *"
 echo -e "* * * * * * * * * * * * * * * * * * * * * * * *"
 echo
@@ -24,7 +31,7 @@ VE_line_80="${VE_line_60}${VE_line_20}"
 
 
 function querying_an_npm_package_in_a_registry {
-    local query___npm_registry_url=$1    # default: 'http://localhost:4873'
+    local query___npm_registry_url=$1    # default: $wulechuan_npm_package_batch_publisher___npm_default_registry_to_publish_packages_to
     local query___package_scope=$2
     local query___package_local_name=$3
     local query___package_version=$4
@@ -63,7 +70,7 @@ function querying_an_npm_package_in_a_registry {
 
 
     if [ -z "$query___npm_registry_url" ]; then
-        query___npm_registry_url='http://localhost:4873'
+        query___npm_registry_url="$wulechuan_npm_package_batch_publisher___npm_default_registry_to_publish_packages_to"
     fi
 
 
@@ -141,10 +148,10 @@ function querying_an_npm_package_in_a_registry {
 
 
 function for_all_cached_tgz_files_try_publish_them_to_a_registry {
-    local publishing___tgz_cache_root_folder_path=$1 # default: '/c/taobao-npm-tgz-caches'
-    local publishing___npm_registry_url=$2 # default: 'http://localhost:4873'
-    local publishing___should_dry_run=$3   # 'yes' or anything else
-    local publishing___should_debug=$4     # 'yes' or anything else
+    local publishing___tgz_cache_root_folder_path=$1 # default: $wulechuan_npm_package_batch_publisher___tgz_cache_root_folder_default_full_path
+    local publishing___npm_registry_url=$2           # default: $wulechuan_npm_package_batch_publisher___npm_default_registry_to_publish_packages_to
+    local publishing___should_dry_run=$3             # 'yes' or anything else
+    local publishing___should_debug=$4               # 'yes' or anything else
 
 
 
@@ -169,11 +176,11 @@ function for_all_cached_tgz_files_try_publish_them_to_a_registry {
 
 
     if [ -z "$publishing___tgz_cache_root_folder_path" ]; then
-        publishing___tgz_cache_root_folder_path='/c/taobao-npm-tgz-caches'
+        publishing___tgz_cache_root_folder_path="$wulechuan_npm_package_batch_publisher___tgz_cache_root_folder_default_full_path"
     fi
 
     if [ -z "$publishing___npm_registry_url" ]; then
-        publishing___npm_registry_url='http://localhost:4873'
+        publishing___npm_registry_url="$wulechuan_npm_package_batch_publisher___npm_default_registry_to_publish_packages_to"
     fi
 
 
@@ -188,18 +195,14 @@ function for_all_cached_tgz_files_try_publish_them_to_a_registry {
 
     echo
     echo -e "$VE_line_80"
-    echo -e "Scanned folde:   \"\e[33m${publishing___tgz_cache_known_new_packages_folder_path}\e[0m\""
+    echo -e "Scanned folder:   \"\e[33m${publishing___tgz_cache_known_new_packages_folder_path}\e[0m\""
     echo -e "Found .tgz files: \e[35m${publishing___all_tgz_files_count}\e[0m"
     echo -e "$VE_line_80"
     echo
     echo
     echo
 
-    # if [ "$publishing___should_debug" == 'yes' ]; then
-    #     echo -e "[DEBUG]: publishing___tgz_cache_known_new_packages_folder_path=\"${publishing___tgz_cache_known_new_packages_folder_path}\""
-    #     echo -e "[DEBUG]: publishing___all_tgz_file_sub_paths=${publishing___all_tgz_files_count}"
-    #     echo
-    # fi
+
 
 
 
@@ -276,14 +279,14 @@ function for_all_cached_tgz_files_try_publish_them_to_a_registry {
         #     --package-version="${publishing___package_version}" \
         #     --should-debug="${publishing___should_debug}"
 
-        # local publishing___should_proceed=$?
-        local publishing___should_proceed=0
-        # echo -e "[DEBUG]: found exact match? (1 means 'yes') ${publishing___should_proceed}"
+        # local publishing___should_not_proceed=$?
+        local publishing___should_not_proceed=0
+        # echo -e "[DEBUG]: found exact match? (1 means 'yes') ${publishing___should_not_proceed}"
 
 
 
-        if [ $publishing___should_proceed -eq 1 ]; then
-            echo -e  "\e[31m${VE_line_40}\e[0m"
+        if [ $publishing___should_not_proceed -eq 1 ]; then
+            # echo -e  "\e[31m${VE_line_40}\e[0m"
             echo -e "\e[30;41mPUBLISHING SKIPPED\e[0;0m"
             echo -e  "\e[31m${VE_line_40}\e[0m"
 
@@ -354,6 +357,10 @@ for_all_cached_tgz_files_try_publish_them_to_a_registry \
 
 unset -f querying_an_npm_package_in_a_registry
 unset -f for_all_cached_tgz_files_try_publish_them_to_a_registry
+unset    wulechuan_npm_package_batch_publisher___version
+unset    wulechuan_npm_package_batch_publisher___release_date
+unset    wulechuan_npm_package_batch_publisher___tgz_cache_root_folder_default_full_path
+unset    wulechuan_npm_package_batch_publisher___npm_default_registry_to_publish_packages_to
 unset    VE_line_5
 unset    VE_line_10
 unset    VE_line_20
