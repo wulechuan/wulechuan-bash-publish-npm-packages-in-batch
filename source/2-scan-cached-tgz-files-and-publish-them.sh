@@ -227,10 +227,10 @@ function for_all_cached_tgz_files_try_publish_them_to_a_registry {
         if [[ "$publishing___tgz_file_parent_folder_name" =~ ^@[_a-z0-9]+ ]]; then
             publishing___package_scope="${publishing___tgz_file_parent_folder_name}"
             publishing___tgz_file_sub_path="${publishing___package_scope}/${publishing___tgz_file_sub_path}"
-            publishing___tgz_file_containing_folder_sub_path="${publishing___package_scope}"
+            publishing___tgz_file_containing_folder_sub_path="${publishing___package_scope}/"
         fi
 
-        publishing___tgz_file_sub_path="${publishing___tgz_file_containing_folder_sub_path}/${publishing___tgz_file_name}"
+        publishing___tgz_file_sub_path="${publishing___tgz_file_containing_folder_sub_path}${publishing___tgz_file_name}"
 
 
         local publishing___package_full_name_with_version_colorful
@@ -288,11 +288,11 @@ function for_all_cached_tgz_files_try_publish_them_to_a_registry {
             echo -e  "\e[31m${VE_line_40}\e[0m"
 
             if [ "$publishing___should_dry_run" == 'yes' ]; then
-                echo -e  "\e[30;41m[PSUEDO ACTION]\e[0;0m MOVE TO BACKUP FOLDER: \"\e[33m${publishing___tgz_file_containing_folder_sub_path}/${publishing___tgz_file_name}\e[0m\""
+                echo -e  "\e[30;41m[PSUEDO ACTION]\e[0;0m MOVE TO BACKUP FOLDER: \"\e[33m${publishing___tgz_file_containing_folder_sub_path}${publishing___tgz_file_name}\e[0m\""
             else
-                echo -e  "\e[31mMOVE TO BACKUP FOLDER:\e[0m \"\e[33m${publishing___tgz_file_containing_folder_sub_path}/${publishing___tgz_file_name}\e[0m\""
+                echo -e  "\e[31mMOVE TO BACKUP FOLDER:\e[0m \"\e[33m${publishing___tgz_file_containing_folder_sub_path}${publishing___tgz_file_name}\e[0m\""
                 mkdir -p "${publishing___tgz_cache_known_published_packages_folder_path}/${publishing___tgz_file_containing_folder_sub_path}"
-                mv  -f  "${publishing___tgz_file_full_path}" "${publishing___tgz_cache_known_published_packages_folder_path}/${publishing___tgz_file_containing_folder_sub_path}/${publishing___tgz_file_name}"
+                mv  -f  "${publishing___tgz_file_full_path}" "${publishing___tgz_cache_known_published_packages_folder_path}/${publishing___tgz_file_containing_folder_sub_path}${publishing___tgz_file_name}"
             fi
             echo -e  "\e[31m${VE_line_40}\e[0m"
 
@@ -320,17 +320,17 @@ function for_all_cached_tgz_files_try_publish_them_to_a_registry {
             if [ $publishing___exitCodeOfPreviousCommand -eq 0 ]; then
                 echo -e  "\e[32m${VE_line_40}\e[0m"
 
-                echo -e  "\e[33mMOVE TO BACKUP FOLDER:\e[0m \"\e[33m${publishing___tgz_file_containing_folder_sub_path}/${publishing___tgz_file_name}\e[0m\""
+                echo -e  "\e[33mMOVE TO BACKUP FOLDER:\e[0m \"\e[33m${publishing___tgz_file_containing_folder_sub_path}${publishing___tgz_file_name}\e[0m\""
                 mkdir -p "${publishing___tgz_cache_known_published_packages_folder_path}/${publishing___tgz_file_containing_folder_sub_path}"
-                mv  -f  "${publishing___tgz_file_full_path}" "${publishing___tgz_cache_known_published_packages_folder_path}/${publishing___tgz_file_containing_folder_sub_path}/${publishing___tgz_file_name}"
+                mv  -f  "${publishing___tgz_file_full_path}" "${publishing___tgz_cache_known_published_packages_folder_path}/${publishing___tgz_file_containing_folder_sub_path}${publishing___tgz_file_name}"
 
                 echo -e  "\e[32m${VE_line_40}\e[0m"
             else
                 echo -e  "\e[31m${VE_line_40}\e[0m"
 
-                echo -e  "\e[31mMOVE TO FAILED FOLDER:\e[0m \"\e[31m${publishing___tgz_file_containing_folder_sub_path}/${publishing___tgz_file_name}\e[0m\""
+                echo -e  "\e[31mMOVE TO FAILED FOLDER:\e[0m \"\e[31m${publishing___tgz_file_containing_folder_sub_path}${publishing___tgz_file_name}\e[0m\""
                 mkdir -p "${publishing___tgz_cache_known_packages_failed_to_publish_folder_path}/${publishing___tgz_file_containing_folder_sub_path}"
-                mv  -f  "${publishing___tgz_file_full_path}" "${publishing___tgz_cache_known_packages_failed_to_publish_folder_path}/${publishing___tgz_file_containing_folder_sub_path}/${publishing___tgz_file_name}"
+                mv  -f  "${publishing___tgz_file_full_path}" "${publishing___tgz_cache_known_packages_failed_to_publish_folder_path}/${publishing___tgz_file_containing_folder_sub_path}${publishing___tgz_file_name}"
 
                 echo -e  "\e[31m${VE_line_40}\e[0m"
             fi
