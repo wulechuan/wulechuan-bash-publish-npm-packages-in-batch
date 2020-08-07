@@ -50,10 +50,12 @@ function search_npm_packages_recursively_and_download_tgz_files {
 
     local tgzCacheRootFolderFullPath_newPackages="${tgzCacheRootFolderFullPath}/new"
     local tgzCacheRootFolderFullPath_knownPublishedPackages="${tgzCacheRootFolderFullPath}/known-published"
+    local tgzCacheRootFolderFullPath_packagesKnownFailedToPublish="${tgzCacheRootFolderFullPath}/known-failed-to-publish"
 
     if [ $shouldDryRun -eq 0 ]; then
         mkdir -p "${tgzCacheRootFolderFullPath_newPackages}"
         mkdir -p "${tgzCacheRootFolderFullPath_knownPublishedPackages}"
+        mkdir -p "${tgzCacheRootFolderFullPath_packagesKnownFailedToPublish}"
     fi
 
     echo
@@ -110,6 +112,7 @@ function search_npm_packages_recursively_and_download_tgz_files {
 
             local tgz_cache_folder_full_path1="${tgzCacheRootFolderFullPath_newPackages}"
             local tgz_cache_folder_full_path2="${tgzCacheRootFolderFullPath_knownPublishedPackages}"
+            local tgz_cache_folder_full_path3="${tgzCacheRootFolderFullPath_packagesKnownFailedToPublish}"
 
 
 
@@ -126,6 +129,7 @@ function search_npm_packages_recursively_and_download_tgz_files {
 
                     tgz_cache_folder_full_path1="${tgzCacheRootFolderFullPath_newPackages}/${folder_name_at_level_1}"
                     tgz_cache_folder_full_path2="${tgzCacheRootFolderFullPath_knownPublishedPackages}/${folder_name_at_level_1}"
+                    tgz_cache_folder_full_path3="${tgzCacheRootFolderFullPath_packagesKnownFailedToPublish}/${folder_name_at_level_1}"
 
                     if [ $shouldDryRun -eq 0 ]; then
                         mkdir -p "$tgz_cache_folder_full_path1"
@@ -230,6 +234,7 @@ function search_npm_packages_recursively_and_download_tgz_files {
                 local taobao_tgz_url="https://registry.npm.taobao.org/${package_full_name}/download/${package_full_name}-${package_version}.tgz"
                 local tgz_local_cache_file_full_path1="${tgz_cache_folder_full_path1}/${package_local_name}@${package_version}.tgz"
                 local tgz_local_cache_file_full_path2="${tgz_cache_folder_full_path2}/${package_local_name}@${package_version}.tgz"
+                local tgz_local_cache_file_full_path3="${tgz_cache_folder_full_path3}/${package_local_name}@${package_version}.tgz"
 
 
 
@@ -241,6 +246,10 @@ function search_npm_packages_recursively_and_download_tgz_files {
 
                     if [ -f "${tgz_local_cache_file_full_path2}" ]; then
                         shouldNotDownload=2
+                    fi
+
+                    if [ -f "${tgz_local_cache_file_full_path3}" ]; then
+                        shouldNotDownload=3
                     fi
                 fi
 
