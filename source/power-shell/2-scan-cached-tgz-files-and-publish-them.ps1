@@ -18,10 +18,10 @@ $VE_line_5="$VE_line_1$VE_line_1$VE_line_1$VE_line_1$VE_line_1"
 $VE_line_10="$VE_line_5$VE_line_5"
 $VE_line_20="$VE_line_10$VE_line_10"
 $VE_line_30="$VE_line_20$VE_line_10"
-$VE_line_40="$VE_line_20$VE_line_20"
-$VE_line_50="$VE_line_20$VE_line_20$VE_line_10"
-$VE_line_60="$VE_line_20$VE_line_20$VE_line_20"
-$VE_line_80="$VE_line_60$VE_line_20"
+$VE_line_40="$VE_line_30$VE_line_10"
+$VE_line_50="$VE_line_40$VE_line_10"
+$VE_line_60="$VE_line_50$VE_line_10"
+$VE_line_80="$VE_line_40$VE_line_40"
 
 
 
@@ -270,7 +270,7 @@ function Publish-a-tgz-File-to-an-NPM-Registry {
         $destinationPackageFolderFullPath = "$destinationRootFolderFullPath\$packageScopeName"
 
 
-        Write-Colorful -Br        -F $themeColor $VE_line_40
+        Write-Colorful -Br        -F $themeColor $VE_line_80
 
         Write-Colorful -F 'Black' -B $themeColor 'MOVE THIS TO BACKUP FOLDER:'
         Write-Colorful                                                       ' '
@@ -282,7 +282,7 @@ function Publish-a-tgz-File-to-an-NPM-Registry {
 
         Move-Item  -Path "$packageSourceFullPath"  -Destination "$destinationRootFolderFullPath\$packageSourceSubPath\"
 
-        Write-Colorful -Br        -F $themeColor $VE_line_40
+        Write-Colorful -Br        -F $themeColor $VE_line_80
     }
 
 
@@ -339,12 +339,13 @@ function Publish-a-tgz-File-to-an-NPM-Registry {
         Write-Colorful -Br -B 'Red' -F 'Black' 'PUBLISHING SKIPPED'
 
 
-        Write-Colorful -Br          -F 'Red'   $VE_line_40
 
         if ($should_dry_run) {
+            Write-Colorful -Br      -F 'Red'     $VE_line_80
             Write-Colorful -B 'Red' -F 'Black'  '[PSUEDO ACTION]'
             Write-Colorful                                     ' MOVE THIS TO BACKUP FOLDER: '
             Write-Colorful -Br      -F 'Yellow'                                              $tgz_file_sub_path
+            Write-Colorful -Br      -F 'Red'     $VE_line_80
         } else {
             Move-Package-To-Folder `
                 -category              'ok' `
@@ -353,12 +354,10 @@ function Publish-a-tgz-File-to-an-NPM-Registry {
                 -packageSourceFullPath $tgz_file_full_path
         }
 
-        Write-Colorful -Br -F 'Red' $VE_line_40
+        Write-Host
+        Write-Host
+        Write-Host
 
-
-        Write-Host
-        Write-Host
-        Write-Host
         return
     }
 
@@ -371,22 +370,22 @@ function Publish-a-tgz-File-to-an-NPM-Registry {
     Write-Colorful -Br
 
     if ($should_dry_run) {
-        Write-Colorful -Br      -F 'Red'   $VE_line_40
-        Write-Colorful -B 'Red' -F 'Black' '[PSUEDO ACTION]'
-        Write-Colorful                                      ' npm publish --registry="'
-        Write-Colorful -F 'Red'                                                       $npm_registry_url
-        Write-Colorful                                                                                '" "'
-        Write-Colorful -F 'Green'                                                                         $tgz_file_full_path
-        Write-Colorful -Br                                                                                                  '"'
-        Write-Colorful -Br      -F 'Red'   $VE_line_40
+        Write-Colorful -Br        -F 'Red'    $VE_line_80
+        Write-Colorful -F 'Black' -B 'Red'    '[PSUEDO ACTION]'
+        Write-Colorful                                         ' npm publish --registry="'
+        Write-Colorful            -F 'Yellow'                                            $npm_registry_url
+        Write-Colorful                                                                                   '" "'
+        Write-Colorful            -F 'Green'                                                                 $tgz_file_full_path
+        Write-Colorful -Br                                                                                                     '"'
+        Write-Colorful -Br        -F 'Red'    $VE_line_80
     } else {
-        Write-Colorful -Br      -F 'Green' $VE_line_40
-        Write-Colorful                     'npm publish --registry="'
-        Write-Colorful -F 'Red'                                     $npm_registry_url
-        Write-Colorful                                                              '" "'
-        Write-Colorful -F 'Green'                                                       $tgz_file_full_path
-        Write-Colorful -Br                                                                                '"'
-        Write-Colorful -Br      -F 'Green' $VE_line_40
+        Write-Colorful -Br      -F 'Green'  $VE_line_80
+        Write-Colorful                      'npm publish --registry="'
+        Write-Colorful          -F 'Yellow'                          $npm_registry_url
+        Write-Colorful                                                               '" "'
+        Write-Colorful          -F 'Green'                                               $tgz_file_full_path
+        Write-Colorful -Br                                                                                 '"'
+        Write-Colorful -Br      -F 'Green'  $VE_line_80
 
         npm  publish  --registry="$npm_registry_url"  "$tgz_file_full_path"
 
