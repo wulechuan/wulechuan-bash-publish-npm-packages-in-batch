@@ -1,7 +1,5 @@
 $version     = 'v2.5.0'
 $releaseDate = '2020-08-07'
-
-
 $tgz_cache_root_folder_full_path = 'C:\taobao-npm-tgz-caches'
 $folder_name_of_tgz_files_known_published         = 'known-published'
 $folder_name_of_tgz_files_known_failed_to_publish = 'known-failed-to-publish'
@@ -9,11 +7,13 @@ $folder_name_of_tgz_files_to_publish              = 'new'
 
 
 
+
+
 $script:bg = $Host.UI.RawUI.BackgroundColor
 $script:fg = $Host.UI.RawUI.ForegroundColor
 
-$VE_line_1="-"
-# $VE_line_1="$([char]0x2500)"
+# $VE_line_1="-"
+$VE_line_1="$([char]0x2500)"
 $VE_line_5="$VE_line_1$VE_line_1$VE_line_1$VE_line_1$VE_line_1"
 $VE_line_10="$VE_line_5$VE_line_5"
 $VE_line_20="$VE_line_10$VE_line_10"
@@ -22,6 +22,7 @@ $VE_line_40="$VE_line_20$VE_line_20"
 $VE_line_50="$VE_line_20$VE_line_20$VE_line_10"
 $VE_line_60="$VE_line_20$VE_line_20$VE_line_20"
 $VE_line_80="$VE_line_60$VE_line_20"
+
 
 
 
@@ -63,9 +64,7 @@ function Write-Colorful {
 
 
 
-
-
-function print_splash {
+function Print-App-Splash {
     Write-Colorful -Br
     Write-Colorful -Br                 ' * * * * * * * * * * * * * * * * * * * * * * * *'
     Write-Colorful -Br                 ' *                                             *'
@@ -90,7 +89,7 @@ function print_splash {
 
 
 
-function publish_all_newly_cached_tgz_files_to_an_npm_registry {
+function Publish-All-Cached-tgz-Files-to-an-NPM-Registry {
 	Param (
         [string]$npm_registry_url, # default: 'http://localhost:4873'
         [bool]  $should_dry_run,   # default: false
@@ -156,7 +155,7 @@ function publish_all_newly_cached_tgz_files_to_an_npm_registry {
     forEach ($tgz_file_full_name in $all_tgz_file_names_of_non_scoped_npm_packages) {
         $tgz_file_global_index++
 
-        try_publish_single_tgz_file `
+        Publish-a-tgz-File-to-an-NPM-Registry `
             -npm_registry_url      $npm_registry_url `
             -tgz_file_global_index $tgz_file_global_index `
             -package_scope_name    '' `
@@ -174,7 +173,7 @@ function publish_all_newly_cached_tgz_files_to_an_npm_registry {
         ) {
             $tgz_file_global_index++
 
-            try_publish_single_tgz_file `
+            Publish-a-tgz-File-to-an-NPM-Registry `
                 -npm_registry_url      $npm_registry_url `
                 -tgz_file_global_index $tgz_file_global_index `
                 -package_scope_name    $sub_folder_name_as_scope `
@@ -187,7 +186,7 @@ function publish_all_newly_cached_tgz_files_to_an_npm_registry {
 
 
 
-function try_publish_single_tgz_file {
+function Publish-a-tgz-File-to-an-NPM-Registry {
     Param (
         [string]$npm_registry_url,      # default: 'http://localhost:4873'
         [int]   $tgz_file_global_index,
@@ -242,6 +241,50 @@ function try_publish_single_tgz_file {
         Write-Colorful -F 'Magenta'                   $package_version
     }
 
+    function Move-Package-To-Folder {
+        Param(
+            [string]$category = 'ok',       # 'ok',    'fail'
+            [string]$packageScopeName = '', # '', '@wulechuan', '@vue', '@babel', ......
+            [string]$packageSourceSubPath,
+            [string]$packageSourceFullPath
+        )
+
+        if (!$packageSourceSubPath) {
+            Write-Host 'ERROR: $packageSourceSubPath NOT provided for function "Move-Package-To-Folder".'
+            throw 1
+        }
+
+        if (!$packageSourceFullPath) {
+            Write-Host 'ERROR: $packageSourceFullPath NOT provided for function "Move-Package-To-Folder".'
+            throw 2
+        }
+
+        $destinationRootFolderFullPath    = $full_path_of_folder_of_tgz_files_known_published
+        $themeColor = 'Green'
+
+        if ($category -match '^fail$') {
+            $destinationRootFolderFullPath = $full_path_of_folder_of_tgz_files_known_failed_to_publish
+            $themeColor = 'Red'
+        }
+
+        $destinationPackageFolderFullPath = "$destinationRootFolderFullPath\$packageScopeName"
+
+
+        Write-Colorful -Br        -F $themeColor $VE_line_40
+
+        Write-Colorful -F 'Black' -B $themeColor 'MOVE THIS TO BACKUP FOLDER:'
+        Write-Colorful                                                       ' '
+        Write-Colorful -Br        -F $themeColor                               $packageSourceSubPath
+
+        if (!(Test-path $destinationPackageFolderFullPath)) {
+            New-Item  -ItemType 'directory'  -Path $destinationPackageFolderFullPath
+        }
+
+        Move-Item  -Path "$packageSourceFullPath"  -Destination "$destinationRootFolderFullPath\$packageSourceSubPath\"
+
+        Write-Colorful -Br        -F $themeColor $VE_line_40
+    }
+
 
 
     # ----- Print a sub-title for each and every package -----
@@ -294,6 +337,8 @@ function try_publish_single_tgz_file {
 
     if ($alreadyPublished) {
         Write-Colorful -Br -B 'Red' -F 'Black' 'PUBLISHING SKIPPED'
+
+
         Write-Colorful -Br          -F 'Red'   $VE_line_40
 
         if ($should_dry_run) {
@@ -301,18 +346,19 @@ function try_publish_single_tgz_file {
             Write-Colorful                                     ' MOVE THIS TO BACKUP FOLDER: '
             Write-Colorful -Br      -F 'Yellow'                                              $tgz_file_sub_path
         } else {
-            Write-Colorful          -F 'Red'    'MOVE THIS TO BACKUP FOLDER: '
-            Write-Colorful -Br      -F 'Yellow'                              $tgz_file_sub_path
-
-            New-Item  -ItemType 'directory' -Path "$full_path_of_folder_of_tgz_files_known_published\$package_scope_name"
-            Move-Item -Path "$tgz_file_full_path"  -Destination "$full_path_of_folder_of_tgz_files_known_published\$tgz_file_sub_path\"
+            Move-Package-To-Folder `
+                -category              'ok' `
+                -packageScopeName      $package_scope_name `
+                -packageSourceSubPath  $tgz_file_sub_path `
+                -packageSourceFullPath $tgz_file_full_path
         }
 
         Write-Colorful -Br -F 'Red' $VE_line_40
 
-        Write-Colorful -Br
-        Write-Colorful -Br
-        Write-Colorful -Br
+
+        Write-Host
+        Write-Host
+        Write-Host
         return
     }
 
@@ -344,52 +390,33 @@ function try_publish_single_tgz_file {
 
         npm  publish  --registry="$npm_registry_url"  "$tgz_file_full_path"
 
-        # if ($log -cmatch '(?m)npm ERR!') {
-        #     Write-Colorful -Br -F 'Red' 'error error error'
-        # } else {
-        #     Write-Colorful -Br -F 'Red' 'okokokokok'
-        # }
-        
-    #     exitCodeOfPreviousCommand=$?
-
-    #     if [ $exitCodeOfPreviousCommand -eq 0 ]; then
-    #         Write-Host -e  "\e[32m$VE_line_40\e[0m"
-
-    #         Write-Host -e  "\e[33mMOVE TO BACKUP FOLDER:\e[0m \"\e[33m$tgz_file_containing_folder_sub_path$tgz_file_name\e[0m\""
-    #         mkdir -p "$full_path_of_folder_of_tgz_files_known_published/$tgz_file_containing_folder_sub_path"
-    #         mv  -f  "$tgz_file_full_path" "$full_path_of_folder_of_tgz_files_known_published/$tgz_file_containing_folder_sub_path$tgz_file_name"
-
-    #         Write-Host -e  "\e[32m$VE_line_40\e[0m"
-    #     else
-    #         Write-Host -e  "\e[31m$VE_line_40\e[0m"
-
-    #         Write-Host -e  "\e[31mMOVE TO FAILED FOLDER:\e[0m \"\e[31m$tgz_file_containing_folder_sub_path$tgz_file_name\e[0m\""
-    #         mkdir -p "$full_path_of_folder_of_tgz_files_known_failed_to_publish/$tgz_file_containing_folder_sub_path"
-    #         mv  -f  "$tgz_file_full_path" "$full_path_of_folder_of_tgz_files_known_failed_to_publish/$tgz_file_containing_folder_sub_path$tgz_file_name"
-
-    #         Write-Host -e  "\e[31m$VE_line_40\e[0m"
-    #     fi
+        if ($?) {
+            Move-Package-To-Folder `
+                -category              'ok' `
+                -packageScopeName      $package_scope_name `
+                -packageSourceSubPath  $tgz_file_sub_path `
+                -packageSourceFullPath $tgz_file_full_path
+        } else {
+            Move-Package-To-Folder `
+                -category              'fail' `
+                -packageScopeName      $package_scope_name `
+                -packageSourceSubPath  $tgz_file_sub_path `
+                -packageSourceFullPath $tgz_file_full_path
+        }
     }
 
-    Write-Colorful -Br
-    Write-Colorful -Br
-    Write-Colorful -Br
+    Write-Host
+    Write-Host
+    Write-Host
 }
 
-# Param(
-#     [string]$npmRegistryUrl,
-#     [switch]$shouldDryRun,
-#     [switch]$shouldDebug
-# )
 
-# Write-Host "`$npmRegistryUrl=`"$npmRegistryUrl`""
-# Write-Host '$shouldDryRun='$shouldDryRun
-# Write-Host '$shouldDebug='$shouldDebug
-# Write-Host 'count='$args.count
 
-print_splash
 
-publish_all_newly_cached_tgz_files_to_an_npm_registry `
+
+Print-App-Splash
+
+Publish-All-Cached-tgz-Files-to-an-NPM-Registry `
     -npm_registry_url '' `
     -should_dry_run $False `
     -should_debug   $False
